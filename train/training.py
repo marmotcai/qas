@@ -6,14 +6,14 @@ import getopt
 import multiprocessing
 import subprocess
 
-from utils import schedule as sc
+from .utils import schedule as sc
 
-from quant import dataobject as my_do
-from quant import modeling as my_mo
+from .quant import dataobject as my_do
+from .quant import modeling as my_mo
 
-from utils import params as my_params
-from utils import utils as my_utils
-import update as my_update
+from .utils import params as my_params
+from .utils import utils as my_utils
+from .utils import update as my_update
 
 ################################################################################
 
