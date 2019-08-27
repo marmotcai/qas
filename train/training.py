@@ -6,16 +6,25 @@ import getopt
 import multiprocessing
 import subprocess
 
-from .utils import schedule as sc
+import schedule as sc
 
-from .quant import dataobject as my_do
-from .quant import modeling as my_mo
+import tensorflow as tf
 
-from .utils import params as my_params
-from .utils import utils as my_utils
-from .utils import update as my_update
+from quant import dataobject as my_do
+from quant import modeling as my_mo
+
+from utils import params as my_params
+from utils import tools as my_tools
+from utils import update as my_update
 
 ################################################################################
+
+def test_gpu():
+    device_name = tf.test.gpu_device_name()
+    if device_name != '/device:GPU:0':
+        return 'GPU device not found'
+        # raise SystemError('GPU device not found')
+    return 'Found GPU at: {}'.format(device_name)
 
 def usage():
     print("-h --help,           Display this help and exit")
@@ -56,15 +65,15 @@ def evaluation(params):
     else:
         return
 
-    if not my_utils.path_exists(mod_filepath):
+    if not my_tools.path_exists(mod_filepath):
         mod_filepath = my_params.g_config.day_path + mod_filepath
-    if not my_utils.path_exists(mod_filepath):
+    if not my_tools.path_exists(mod_filepath):
         print(mod_filepath + " is not exists")
         return
 
-    if not my_utils.path_exists(data_filepath):
+    if not my_tools.path_exists(data_filepath):
         data_filepath = my_params.g_config.day_path + data_filepath
-    if not my_utils.path_exists(data_filepath):
+    if not my_tools.path_exists(data_filepath):
         print(data_filepath + " is not exists")
         return
 
@@ -74,7 +83,7 @@ def evaluation(params):
 
 def test(type):
     if type in ("gpu"):
-        print(my_utils.test_gpu())
+        print(my_tools.test_gpu())
 
 class process(multiprocessing.Process):
     def __init__(self, cmd, args):
@@ -151,7 +160,7 @@ def main(cmd, argv):
         if name in ("-s", "--setting"):
             setting(value)
         if name in ("-t", "--test"):
-            test(value)
+            test_gpu(value)
         if name in ("-d", "--download"):
             my_do.main(argv)
         if name in ("-m", "--modeling"):

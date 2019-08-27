@@ -12,7 +12,7 @@ from vendor import ztools_data as zdat
 from vendor import ztools_datadown as zddown
 
 from utils import params as my_params
-from utils import utils as my_utils
+from utils import tools as my_tools
 
 ################################################################################
 
@@ -35,13 +35,13 @@ def download_from_inxfile(filepath):
         filename = filepath
 
     if len(filename) <= 0:
-        my_params.g_log.error("download params error!")
+        my_params.g.log.error("download params error!")
         return
 
-    if not my_utils.path_exists(filename):
+    if not my_tools.path_exists(filename):
         filename = my_params.g_config.data_path + filename
-    if not my_utils.path_exists(filename):
-        my_params.g_log.error(filename + " is not exists")
+    if not my_tools.path_exists(filename):
+        my_params.g.log.error(filename + " is not exists")
         return
 
     down_obj = download()
@@ -69,26 +69,26 @@ if __name__ == '__main__':
 
 class download():
     def __init__(self):
-        my_params.g_log.info("start download ...")
+        my_params.g.log.info("start download ...")
 
     def download_inx(self, downpath = my_params.default_datapath, filename = "inx_code.csv"):
-        if my_utils.path_exists(filename) == False:
-            my_params.g_log.error("inx file is not exists and exit")
+        if my_tools.path_exists(filename) == False:
+            my_params.g.log.error("inx file is not exists and exit")
             return False
 
-        if my_utils.path_exists(downpath) == False:
-            my_utils.mkdir(downpath)
+        if my_tools.path_exists(downpath) == False:
+            my_tools.mkdir(downpath)
 
         zddown.down_stk_inx(downpath, filename);
         return True
 
     def downlaod_stk(self, downpath = my_params.default_datapath, filename = "stk_code.csv"):
-        if my_utils.path_exists(filename) == False:
-            my_params.g_log.error("stk file is not exists and exit")
+        if my_tools.path_exists(filename) == False:
+            my_params.g.log.error("stk file is not exists and exit")
             return False
 
-        if my_utils.path_exists(downpath) == False:
-            my_utils.mkdir(downpath)
+        if my_tools.path_exists(downpath) == False:
+            my_tools.mkdir(downpath)
 
         xtyp = 'D' # xtyp = '5'
         zddown.down_stk_all(downpath, filename, xtyp)

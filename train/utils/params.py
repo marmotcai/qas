@@ -1,7 +1,7 @@
 
 
 import configparser
-from utils import utils as my_utils
+from utils import tools as my_tools
 from utils import logger as log
 
 import pandas as pd
@@ -55,7 +55,7 @@ class cmder:
 class Global:
     def __init__(self):
 
-        my_utils.mkdir(default_datapath)
+        my_tools.mkdir(default_datapath)
 
         self.config = config()
         self.log = log.logger(self.config.log_file, app_name)
@@ -67,7 +67,7 @@ class config:
     def __init__(self, filename = default_configfile):
         self.conf = configparser.ConfigParser()
 
-        if my_utils.path_exists(filename) == False:
+        if my_tools.path_exists(filename) == False:
             self.init_config(filename)
 
         self.load_config(filename)

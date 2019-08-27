@@ -11,7 +11,7 @@ from vendor import zai_keras as zks
 from quant import dataobject as my_do
 from quant import evaluation as eva
 from utils import params as my_params
-from utils import utils as my_utils
+from utils import tools as my_tools
 
 ################################################################################
 
@@ -68,7 +68,7 @@ class model():
 
         print('\n num_in, num_out:', num_in, num_out)
 
-        if not my_utils.path_exists(model_filename):
+        if not my_tools.path_exists(model_filename):
             # mx = zks.rnn010(num_in, num_out)
             # mx = zks.lstm010(num_in, num_out)
 
@@ -90,7 +90,7 @@ class model():
         eva_obj.predict(mx, self.df_test, self.x_test)
 
     def eva(self, mode_filename):
-        if my_utils.path_exists(mode_filename):
+        if my_tools.path_exists(mode_filename):
             model = self.setmod(mode_filename)
         eva_obj = eva.evaluation(self.do)
 
@@ -113,7 +113,7 @@ def modeling(params):
         model_lst.append(params)
 
     if len(model_lst) < 2:
-        my_params.g_log.error("modeling params is error!")
+        my_params.g.log.error("modeling params is error!")
         return
 
     mod_type = my_params.default_model
@@ -129,9 +129,9 @@ def modeling(params):
             filepath = param
 
             if '.csv' == suffix.lower():
-                if not my_utils.path_exists(filepath):
+                if not my_tools.path_exists(filepath):
                     filepath = my_params.g_config.day_path + filepath
-                if not my_utils.path_exists(filepath):
+                if not my_tools.path_exists(filepath):
                     print(filepath + " is not exists")
                     return
 

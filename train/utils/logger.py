@@ -1,12 +1,12 @@
 import logging
 
-from utils import utils as my_utils
+from utils import tools as my_tools
 
 ################################################################################
 
 class logger():
     def __init__(self, logfilename, appname = "", level = logging.INFO):
-        my_utils.mkdir(logfilename)
+        my_tools.mkdir(logfilename)
 
         if len(appname) <= 0: appname = __name__
         self.logger = logging.getLogger(appname)

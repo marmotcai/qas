@@ -1,6 +1,5 @@
 
 import os
-import tensorflow as tf
 
 def mkdir(path):
     filename = os.path.basename(path)
@@ -18,13 +17,6 @@ def mkdir(path):
         return True
     else:
         return False
-
-def test_gpu():
-    device_name = tf.test.gpu_device_name()
-    if device_name != '/device:GPU:0':
-        return 'GPU device not found'
-        # raise SystemError('GPU device not found')
-    return 'Found GPU at: {}'.format(device_name)
 
 def path_exists(path):
     if os.path.exists(path):
