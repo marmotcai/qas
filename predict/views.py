@@ -15,9 +15,9 @@ from LSTMPredictStock import run
 LOCAL = False
 
 def get_hist_predict_data(stock_code):
-    recent_data,predict_data = None,None
+    recent_data,predict_data = None, None
     # company = models.Company.objects.get(stock_code=stock_code)
-    company = get_object_or_404(Company, stock_code=stock_code)
+    company = get_object_or_404(Company, stock_code = stock_code)
 
     if company.historydata_set.count() <= 0:
         history_data = models.HistoryData()
@@ -56,7 +56,7 @@ def get_hist_predict_data(stock_code):
             predict_data = single.get_data()
             break
 
-    return recent_data,predict_data
+    return recent_data, predict_data
 
 def get_crawl_save_data():
     """
@@ -93,7 +93,7 @@ def home(request):
     return render(request,"predict/home.html",{"data":json.dumps(data)}) # json.dumps(list)
 
 def predict_stock_action(request):
-    stock_code = request.POST.get('stock_code',None)
+    stock_code = request.POST.get('stock_code', None)
     # print("stock_code:\n",stock_code)
     recent_data, predict_data = get_hist_predict_data(stock_code)
     data = {"recent_data": recent_data, "stock_code": stock_code, "predict_data": predict_data}
