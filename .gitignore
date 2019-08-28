@@ -6,6 +6,12 @@ __pycache__/
 .idea
 data/
 
+*.csv
+*.png
+*.pic
+*.h5
+*.ini
+
 # C extensions
 *.so
 
