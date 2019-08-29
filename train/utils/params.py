@@ -1,8 +1,8 @@
 
 
 import configparser
-from utils import tools as my_tools
-from utils import logger as log
+from train.utils import tools as my_tools
+from train.utils import logger as log
 
 import pandas as pd
 
@@ -24,7 +24,7 @@ default_inxpath = 'inx/'
 default_inx_filename = 'my_inx_code.csv'
 default_stk_filename = 'my_stk_code.csv'
 
-default_model = 'rate'
+default_model_type = 'rate'
 
 ################################################################################
 

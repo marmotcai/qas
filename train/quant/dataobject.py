@@ -5,14 +5,49 @@ import getopt
 import pickle
 import pandas as pd
 
-from vendor import zsys
-from vendor import zpd_talib as zta
-from vendor import ztools as zt
-from vendor import ztools_data as zdat
-from vendor import ztools_datadown as zddown
+from train.vendor import zsys
+from train.vendor import zpd_talib as zta
+from train.vendor import ztools as zt
+from train.vendor import ztools_data as zdat
+from train.vendor import ztools_datadown as zddown
 
-from utils import params as my_params
-from utils import tools as my_tools
+from train.utils import params as my_params
+from train.utils import tools as my_tools
+
+################################################################################
+
+class download():
+    def __init__(self):
+        my_params.g.log.info("start download ...")
+
+    def checkdir(self, path): # 创建目录
+        if my_tools.path_exists(path) == False:
+            my_tools.mkdir(path)
+
+    def download_code(self, downpath, code):
+        self.checkdir(downpath)
+        return zddown.down_stk010(downpath, code, 'D');
+
+    def download_inx(self, downpath = my_params.default_datapath, filename = "inx_code.csv"):
+        if my_tools.path_exists(filename) == False:
+            my_params.g.log.error("inx file is not exists and exit")
+            return False
+
+        self.checkdir(downpath)
+
+        zddown.down_stk_inx(downpath, filename);
+        return True
+
+    def downlaod_stk(self, downpath = my_params.default_datapath, filename = "stk_code.csv"):
+        if my_tools.path_exists(filename) == False:
+            my_params.g.log.error("stk file is not exists and exit")
+            return False
+
+        if my_tools.path_exists(downpath) == False:
+            my_tools.mkdir(downpath)
+
+        xtyp = 'D' # xtyp = '5'
+        zddown.down_stk_all(downpath, filename, xtyp)
 
 ################################################################################
 
@@ -39,16 +74,20 @@ def download_from_inxfile(filepath):
         return
 
     if not my_tools.path_exists(filename):
-        filename = my_params.g_config.data_path + filename
+        filename = my_params.g.config.data_path + filename
     if not my_tools.path_exists(filename):
         my_params.g.log.error(filename + " is not exists")
         return
 
     down_obj = download()
     if type == "inx":
-        down_obj.download_inx(my_params.g_config.day_path, filename)
+        down_obj.download_inx(my_params.g.config.day_path, filename)
     if type == "stk":
-        down_obj.downlaod_stk(my_params.g_config.day_path, filename)
+        down_obj.downlaod_stk(my_params.g.config.day_path, filename)
+
+def download_from_code(code):
+    down_obj = download()
+    return down_obj.download_code(my_params.g.config.day_path, code)
 
 def main(argv):
     try:
@@ -58,6 +97,8 @@ def main(argv):
 
     for name, value in options:
         if name in ("-d", "--download"):
+            if my_tools.isInt(value):
+                download_from_code(value)
             if os.path.isdir(value):
                 download_from_path(value)
             if os.path.isfile(value):
@@ -66,32 +107,6 @@ def main(argv):
 if __name__ == '__main__':
     main(sys.argv[1:])
     sys.exit()
-
-class download():
-    def __init__(self):
-        my_params.g.log.info("start download ...")
-
-    def download_inx(self, downpath = my_params.default_datapath, filename = "inx_code.csv"):
-        if my_tools.path_exists(filename) == False:
-            my_params.g.log.error("inx file is not exists and exit")
-            return False
-
-        if my_tools.path_exists(downpath) == False:
-            my_tools.mkdir(downpath)
-
-        zddown.down_stk_inx(downpath, filename);
-        return True
-
-    def downlaod_stk(self, downpath = my_params.default_datapath, filename = "stk_code.csv"):
-        if my_tools.path_exists(filename) == False:
-            my_params.g.log.error("stk file is not exists and exit")
-            return False
-
-        if my_tools.path_exists(downpath) == False:
-            my_tools.mkdir(downpath)
-
-        xtyp = 'D' # xtyp = '5'
-        zddown.down_stk_all(downpath, filename, xtyp)
 
 ################################################################################
 
@@ -192,16 +207,17 @@ class util():
 
 class  train_data():
 
-    def __init__(self, data_file):
+    def __init__(self, data_file = ""):
 
         self.model_type = {'rate': self.model_rate, 'amp': self.model_amp}  # 定义策略执行函数
-        self.df = pd.read_csv(data_file, index_col = 0)
+
+        if len(data_file) > 0:
+            self.df = pd.read_csv(data_file, index_col = 0)
 
     def load(self, filepath):
         f = open(filepath, 'rb')
         x = pickle.load(f)
         f.close()
-
         return x
 
     def save(self, filepath, df):

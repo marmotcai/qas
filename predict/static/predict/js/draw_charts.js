@@ -227,6 +227,8 @@ if(recent_data != null && predict_data != null){
     draw_chart();
 }
 
+
+console.log(stock_code)
 var ops = document.getElementById(stock_code);
 ops.selected = true;
 

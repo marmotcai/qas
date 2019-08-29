@@ -12,17 +12,19 @@ from predict import models
 from .models import Company
 from LSTMPredictStock import run
 
+from train.utils import params as my_params
+
 LOCAL = False
 
 def get_hist_predict_data(stock_code):
-    recent_data,predict_data = None, None
+    recent_data, predict_data = None, None
     # company = models.Company.objects.get(stock_code=stock_code)
     company = get_object_or_404(Company, stock_code = stock_code)
 
     if company.historydata_set.count() <= 0:
         history_data = models.HistoryData()
         history_data.company = company
-        history_data.set_data(run.get_hist_data(stock_code=stock_code,recent_day=20))
+        history_data.set_data(run.get_hist_data(stock_code = stock_code, recent_day = 20))
         history_data.save()
         recent_data = history_data.get_data()
     else:
@@ -30,9 +32,9 @@ def get_hist_predict_data(stock_code):
         for single in all_data:
             now = dt.now()
             end_date = single.get_data()[-1][0]
-            end_date = dt.strptime(end_date,"%Y-%m-%d")
+            end_date = dt.strptime(end_date, "%Y-%m-%d")
             if LOCAL & (now.date() > end_date.date()):        # 更新预测数据
-                single.set_data(run.get_hist_data(stock_code=stock_code,recent_day=20))
+                single.set_data(run.get_hist_data(stock_code = stock_code, recent_day = 20))
                 single.save()
 
             recent_data = single.get_data()
@@ -94,11 +96,19 @@ def home(request):
 
 def predict_stock_action(request):
     stock_code = request.POST.get('stock_code', None)
-    # print("stock_code:\n",stock_code)
+    my_params.g.log.info("request stock_code: " + stock_code)
+
     recent_data, predict_data = get_hist_predict_data(stock_code)
     data = {"recent_data": recent_data, "stock_code": stock_code, "predict_data": predict_data}
     data['indexs'] = get_stock_index(stock_code)
     return render(request, "predict/home.html", {"data": json.dumps(data)})  # json.dumps(list)
 
 def index(request):
+    stock_code = request.POST.get('stock_code', None)
+    if (stock_code == None):
+        return render(request, "predict/home.html")
+
+    my_params.g.log.info("request stock_code: " + stock_code)
+
+
     return HttpResponse(u"欢迎光临")

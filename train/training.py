@@ -10,12 +10,12 @@ import schedule as sc
 
 import tensorflow as tf
 
-from quant import dataobject as my_do
-from quant import modeling as my_mo
+from train.quant import dataobject as my_do
+from train.quant import modeling as my_mo
 
-from utils import params as my_params
-from utils import tools as my_tools
-from utils import update as my_update
+from train.utils import params as my_params
+from train.utils import tools as my_tools
+from train.utils import update as my_update
 
 ################################################################################
 

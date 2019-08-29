@@ -1,28 +1,40 @@
 import sys
-import os
 import getopt
 import arrow
 import keras
 from keras.utils import plot_model
 from keras.models import load_model
 
-from vendor import ztools as zt
-from vendor import zai_keras as zks
-from quant import dataobject as my_do
-from quant import evaluation as eva
-from utils import params as my_params
-from utils import tools as my_tools
+from train.vendor import ztools as zt
+from train.vendor import zai_keras as zks
+from train.quant import dataobject as my_do
+from train.quant import evaluation as eva
+from train.utils import params as my_params
+from train.utils import tools as my_tools
 
 ################################################################################
 
 class model():
-    def __init__(self, modfilename = ""):
+    def __init__(self, type, code, datafile, modfile):
         self.do = None
-        if len(modfilename) > 0:
-            self.load(modfilename)
 
-    def setdata(self, filename):
-        self.do = loaddata(filename) # 数据对象
+        self.type = my_params.default_model_type
+        if len(type) > 0:
+            self.type = type
+
+        if len(code) > 0 and len(datafile) <= 0:
+            self.code = code
+            _, datafile = my_do.download_from_code(code)
+
+        if len(datafile) > 0:
+            self.setdata(datafile)
+            self.modeling(self.type) # 数据预处理
+
+        if len(modfile) > 0:
+            self.setmod(modfile)
+
+    def setdata(self, filename = ""):
+        self.do = my_do.train_data(filename)
 
     def setmod(self, filename):
         self.mx = load_model(filename)
@@ -36,7 +48,7 @@ class model():
         if len(filename) > 0:
             model.save(filename)
 
-    def building(self, model_filename=""):
+    def building(self, model_filename = ""):
 
         # 分离训练和测试数据
         self.df_train, self.df_test = my_do.util.split(self.do.df, 0.6)
@@ -99,56 +111,74 @@ class model():
 
 ################################################################################
 
-def loaddata(filename):
-    data = my_do.train_data(filename)
-    print(data.df.tail(10))
-    return data
-
 def modeling(params):
-    model_lst = []
+    param_lst = []
+    if "," in params:
+        param_lst = params.split(",")
     if "|" in params:
-        model_lst = params.split("|")
-    else:
-        model_lst.append(my_params.default_model)
-        model_lst.append(params)
+        param_lst = params.split("|")
 
-    if len(model_lst) < 2:
+    if len(param_lst) < 1:
         my_params.g.log.error("modeling params is error!")
         return
 
-    mod_type = my_params.default_model
-    data_filepath = ""
-    mod_filepath = ""
+    type = "rate"
+    code = ""
+    datafile = ""
+    modfile = ""
+    for j in range(0, len(param_lst)):
+        param = param_lst[j]
+        if 'type' in param.lower():
+            type = param.split(":")[1]
+        if 'code' in param.lower():
+            code = param.split(":")[1]
+        if 'data' in param.lower():
+            datafile = param.split(":")[1]
+        if 'mod' in param.lower():
+            modfile = param.split(":")[1]
 
-    for j in range(0, len(model_lst)):
-        param = model_lst[j]
-        suffix = os.path.splitext(param)[1]
-        if len(suffix) <= 0:
-            mod_type = param
-        else:
-            filepath = param
+    mo = model(type, code, datafile, modfile)
+    mo.building()
 
-            if '.csv' == suffix.lower():
-                if not my_tools.path_exists(filepath):
-                    filepath = my_params.g_config.day_path + filepath
-                if not my_tools.path_exists(filepath):
-                    print(filepath + " is not exists")
-                    return
-
-                data_filepath = filepath
-
-            if '.mod' == suffix.lower():
-                mod_filepath = filepath
-
-    mo = model()
-    if len(data_filepath) > 0:
-        mo.setdata(data_filepath)
-
-    if len(mod_filepath) <= 0:
-        mod_filepath = filepath + ".mod"
-
-    mo.modeling(mod_type)
-    mo.building(mod_filepath)
+#    if "," in params:
+#        model_lst = params.split(",")
+#    else:
+#        model_lst.append(my_params.default_model)
+#        model_lst.append(params)
+#
+#    mod_type = my_params.default_model
+#    data_filepath = ""
+#    mod_filepath = ""
+#
+#    for j in range(0, len(model_lst)):
+#        param = model_lst[j]
+#        suffix = os.path.splitext(param)[1]
+#        if len(suffix) <= 0:
+#            mod_type = param
+#        else:
+#            filepath = param
+#
+#            if '.csv' == suffix.lower():
+#                if not my_tools.path_exists(filepath):
+#                    filepath = my_params.g_config.day_path + filepath
+#                if not my_tools.path_exists(filepath):
+#                    print(filepath + " is not exists")
+#                    return
+#
+#                data_filepath = filepath
+#
+#            if '.mod' == suffix.lower():
+#                mod_filepath = filepath
+#
+#    mo = model()
+#    if len(data_filepath) > 0:
+#        mo.setdata(data_filepath)
+#
+#    if len(mod_filepath) <= 0:
+#        mod_filepath = filepath + ".mod"
+#
+#    mo.modeling(mod_type)
+#    mo.building(mod_filepath)
 
 ################################################################################
 

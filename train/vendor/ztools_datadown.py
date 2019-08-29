@@ -28,7 +28,7 @@ import tushare as ts
 #
 
 #
-from vendor import zsys, ztools_data as zdat, ztools as zt
+from train.vendor import zsys, ztools_data as zdat, ztools as zt
 
 
 #
@@ -171,7 +171,7 @@ def down_stk010(rdat,xcod,xtyp,fgInx=False):
         pass    #skip,error
     
            
-    return xd  
+    return xd, fss
 
 def down_stk_all(rdat,finx,xtyp='D',fgInx=False):
     '''

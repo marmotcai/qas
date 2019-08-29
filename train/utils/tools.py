@@ -22,3 +22,10 @@ def path_exists(path):
     if os.path.exists(path):
         return True;
     return False
+
+def isInt(num):
+    try:
+        num = int(str(num))
+        return isinstance(num, int)
+    except:
+        return False

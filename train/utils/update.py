@@ -3,7 +3,7 @@ import sys
 import getopt
 from git import Repo
 
-from utils import params as my_params
+from train.utils import params as my_params
 
 # 本模块需要先执行以下命令,并登录一次
 # git config --global credential.helper store

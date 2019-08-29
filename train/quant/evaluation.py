@@ -1,10 +1,10 @@
 import arrow
 import numpy as np
 
-from vendor import ztools as zt
-from vendor import ztools_data as zdat
-from vendor import ztools_tq as ztq
-from utils import params as p
+from train.vendor import ztools as zt
+from train.vendor import ztools_data as zdat
+from train.vendor import ztools_tq as ztq
+from train.utils import params as p
 
 class evaluation():
 
