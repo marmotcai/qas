@@ -13,6 +13,7 @@ from train.vendor import ztools_datadown as zddown
 
 from train.utils import params as my_params
 from train.utils import tools as my_tools
+from train.quant import downloader as dler
 
 ################################################################################
 
@@ -24,9 +25,17 @@ class download():
         if my_tools.path_exists(path) == False:
             my_tools.mkdir(path)
 
-    def download_code(self, downpath, code):
+    def download_all(self, tim0 = '1994-01-01'):
+        my_params.g.log.info("download all data from " + tim0)
+
+        self.checkdir(my_params.g.config.data_path)
+        dler.down_stk_base(my_params.g.config.data_path)
+        dler.down_stk_pool(my_params.g.config.data_path,
+                           my_params.g.config.data_path + my_params.default_stk_base_filename)
+
+    def download_code(self, downpath, code, tim0):
         self.checkdir(downpath)
-        return zddown.down_stk010(downpath, code, 'D');
+        return zddown.down_stk010(downpath, code, 'D', tim0);
 
     def download_inx(self, downpath = my_params.default_datapath, filename = "inx_code.csv"):
         if my_tools.path_exists(filename) == False:
@@ -50,6 +59,10 @@ class download():
         zddown.down_stk_all(downpath, filename, xtyp)
 
 ################################################################################
+
+def download_all():
+    down_obj = download()
+    down_obj.download_all('2007-01-01')
 
 def download_from_path(path):
     for root, dirs, files in os.walk(path):
@@ -85,9 +98,9 @@ def download_from_inxfile(filepath):
     if type == "stk":
         down_obj.downlaod_stk(my_params.g.config.day_path, filename)
 
-def download_from_code(code):
+def download_from_code(code, tim0):
     down_obj = download()
-    return down_obj.download_code(my_params.g.config.day_path, code)
+    return down_obj.download_code(my_params.g.config.day_path, code, tim0)
 
 def main(argv):
     try:
@@ -97,7 +110,9 @@ def main(argv):
 
     for name, value in options:
         if name in ("-d", "--download"):
-            if my_tools.isInt(value):
+            if value == "initialize":
+                download_all()
+            if my_tools.isint(value):
                 download_from_code(value)
             if os.path.isdir(value):
                 download_from_path(value)
@@ -114,7 +129,7 @@ class util():
     def __init__(self):
         pd.set_option('display.max_rows', 10)
         pd.set_option('display.width', 450)
-        pd.set_option('display.float_format', zt.xfloat5)
+        pd.set_option('display.float_format', zt.xfloat3)
 
     def get_onehot(df, k):
         return pd.get_dummies(df[k]).values
@@ -164,7 +179,6 @@ class util():
             df[keyname_profit] = df['close'].shift(-1 * (j)).sub(df['close'])
             df[keyname_rate] = df[keyname_profit].div(df['close'])
 
-
         df['next_rate_10_type'] = df['next_rate_10'].apply(zt.iff3type, d0=0, d9=0.05, v3=3, v2=2, v1=1)  # 振幅分类器
 
         return df
@@ -195,7 +209,6 @@ class util():
             return util.get_onehot(df, 'y')
         else:
             return df['y']
-
 
     def split(df, DC):
         # 训练数据和测试数据分割

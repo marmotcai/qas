@@ -254,23 +254,22 @@ def df_xed_xtyp2x(df_train,df_test,kmod='3',k0=99.5,k9=100.5,sgnTyp='ktype',sgnP
     
     
 #----------df.file
-def df_rdcsv_tim0(fss,ksgn,tim0):
-    xd0= pd.read_csv(fss,index_col=False,encoding='gbk') 
-    #print('\nxd0\n',xd0.head())
-    if (len(xd0)>0): 
-        #xd0=xd0.sort_index(ascending=False);
-        #xd0=xd0.sort_values(['date'],ascending=False);
-        xd0=xd0.sort_values([ksgn],ascending=True);
-        #print('\nxd0\n',xd0)
-        xc=xd0.index[-1];###
-        _xt=xd0[ksgn][xc];#xc=xd0.index[-1];###
-        s2=str(_xt);
-        #print('\nxc,',xc,_xt,'s2,',s2)
-        if s2!='nan':
-            tim0=s2.split(" ")[0]        
-            
+def df_rdcsv_tim0(fss, ksgn, tim0):
+    xd0 = pd.read_csv(fss, index_col = False, encoding = 'gbk')
+    # print('\nxd0\n', xd0.head())
+    if (len(xd0) > 0):
+        # xd0 = xd0.sort_index(ascending = False);
+        # xd0 = xd0.sort_values(['date'],ascending = False);
+        xd0 = xd0.sort_values([ksgn], ascending = True);
+        # print('\nxd0\n', xd0)
+        xc = xd0.index[-1];
+        _xt = xd0[ksgn][xc]; # xc = xd0.index[-1];
+        s2 = str(_xt);
+        # print('\nxc,', xc, _xt, 's2,', s2)
+        if s2 != 'nan':
+            tim0 = s2.split(" ")[0]
     #
-    return xd0,tim0        
+    return xd0, tim0
 
 #-------------------pools
 

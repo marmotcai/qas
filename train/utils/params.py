@@ -19,17 +19,27 @@ default_configfile = './config.ini'
 default_section_setting = 'setting'
 default_section_schedule = 'schedule_'
 
+default_modpath = 'mod/'
 default_daypath = 'day/'
 default_inxpath = 'inx/'
 default_inx_filename = 'my_inx_code.csv'
-default_stk_filename = 'my_stk_code.csv'
+default_stk_inx_filename = 'my_stk_inx.csv'
+default_stk_base_filename = 'my_stk_base.csv'
+default_stk_code_filename = 'my_stk_code.csv'
 
 default_model_type = 'rate'
 
 ################################################################################
-
+#
 ohlc_lst = ['open', 'high', 'low', 'close']
 volume_lst = ['volume']
+#
+ohlcv_lst = ohlc_lst + ['volume']
+#
+ohlcd_lst = ['date'] + ohlc_lst
+ohlcdv_lst = ['date'] + ohlcv_lst
+#
+
 profit_lst = ['next_profit_1', 'next_profit_2', 'next_profit_3', 'next_profit_4', 'next_profit_5', 'next_profit_6', 'next_profit_7', 'next_profit_8', 'next_profit_9', 'next_profit_10']
 
 ################################################################################
@@ -53,6 +63,7 @@ class cmder:
 
 
 class Global:
+
     def __init__(self):
 
         my_tools.mkdir(default_datapath)
@@ -84,6 +95,7 @@ class config:
         self.conf.add_section(default_section_setting)
         self.conf.set(default_section_setting, 'logfile', default_logpath + app_name + '.log')
         self.conf.set(default_section_setting, 'datapath', default_datapath)
+        self.conf.set(default_section_setting, 'modpath', default_datapath + default_modpath)
         self.conf.set(default_section_setting, 'daypath', default_datapath + default_daypath)
         self.conf.set(default_section_setting, 'inxpath', default_datapath + default_inxpath)
 
@@ -101,6 +113,7 @@ class config:
 
         self.log_file = self.conf.get(default_section_setting, 'logfile')
         self.data_path = self.conf.get(default_section_setting, 'datapath')
+        self.mod_path = self.conf.get(default_section_setting, 'modpath')
         self.day_path = self.conf.get(default_section_setting, 'daypath')
         self.inx_path = self.conf.get(default_section_setting, 'inxpath')
 
@@ -128,6 +141,7 @@ class config:
         print("***********")
         print("log_file:    " + self.log_file)
         print("data_path:   " + self.data_path)
+        print("mod_path:   " + self.mod_path)
         print("day_path:    " + self.day_path)
         print("inx_path:    " + self.inx_path)
 
@@ -142,5 +156,6 @@ class config:
         print("-----------------------------")
 
 g = Global()
+g.config.print_current_information()
 
 ################################################################################

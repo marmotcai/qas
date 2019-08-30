@@ -138,7 +138,7 @@ def main(cmd, argv):
         return
 
     try:
-        options, args = getopt.getopt(argv, "hvuil:s:t:d:m:e:", ["help", "version", "update", "load=", "setting=", "test=", "download=", "modeling=", "evaluation="])
+        options, args = getopt.getopt(argv, "hvuil:s:t:d:m:p:e:", ["help", "version", "update", "initialize", "load=", "setting=", "test=", "download=", "modeling=", "evaluation=", "predict="])
     except getopt.GetoptError:
         sys.exit()
 
@@ -153,8 +153,7 @@ def main(cmd, argv):
             my_update.main(argv)
 
         if name in ("-i", "--initialize"):
-            usage()
-
+            my_mo.main(argv)
         if name in ("-l", "--load"):
             loadconfig(value)
         if name in ("-s", "--setting"):
@@ -164,6 +163,8 @@ def main(cmd, argv):
         if name in ("-d", "--download"):
             my_do.main(argv)
         if name in ("-m", "--modeling"):
+            my_mo.main(argv)
+        if name in ("-p", "--predict"):
             my_mo.main(argv)
         if name in ("-e", "--evaluation"):
             evaluation(value)

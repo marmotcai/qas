@@ -31,4 +31,6 @@ class evaluation():
         zt.prx('x1', x1);
         zt.prx('x2', x2)
 
+        print('\n', y_pred0)
+
         return df_x

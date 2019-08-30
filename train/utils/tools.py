@@ -1,11 +1,22 @@
 
 import os
 
-def mkdir(path):
-    filename = os.path.basename(path)
-    if len(filename) > 0:
-        path = os.path.dirname(path)
+def get_code_from_filename(filepath):
+    path, filename = os.path.split(filepath)
+    return os.path.splitext(filename)
 
+def get_suffix_from_filepath(filepath):
+    return os.path.splitext(filepath)[1]
+
+def check_path_exists(filepath):
+    path = os.path.dirname(filepath)
+    if not path_exists(path):
+        return mkdir(path)
+    return True
+
+def mkdir(path):
+    if not os.path.isdir(path):
+        path = os.path.dirname(path)
     # 去除首位空格
     path = path.strip()
     # 去除尾部 \ 符号
@@ -19,11 +30,9 @@ def mkdir(path):
         return False
 
 def path_exists(path):
-    if os.path.exists(path):
-        return True;
-    return False
+    return os.path.exists(path)
 
-def isInt(num):
+def isint(num):
     try:
         num = int(str(num))
         return isinstance(num, int)

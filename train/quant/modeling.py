@@ -1,4 +1,4 @@
-import sys
+import sys, os
 import getopt
 import arrow
 import keras
@@ -15,23 +15,15 @@ from train.utils import tools as my_tools
 ################################################################################
 
 class model():
-    def __init__(self, type, code, datafile, modfile):
+    def __init__(self, type, datafile):
         self.do = None
 
         self.type = my_params.default_model_type
         if len(type) > 0:
             self.type = type
 
-        if len(code) > 0 and len(datafile) <= 0:
-            self.code = code
-            _, datafile = my_do.download_from_code(code)
-
         if len(datafile) > 0:
             self.setdata(datafile)
-            self.modeling(self.type) # 数据预处理
-
-        if len(modfile) > 0:
-            self.setmod(modfile)
 
     def setdata(self, filename = ""):
         self.do = my_do.train_data(filename)
@@ -40,15 +32,18 @@ class model():
         self.mx = load_model(filename)
         return self.mx
 
-    def modeling(self, type = 'rate'): # 建模过程
-        if (self.do != None):
-            self.do.prepared(type)
-
     def save(self, model, filename):
-        if len(filename) > 0:
-            model.save(filename)
+        if len(filename) <= 0:
+            return False
+        my_tools.check_path_exists(filename)
+        return model.save(filename)
 
-    def building(self, model_filename = ""):
+    def modeling(self, model_filename = ""):
+
+        if (self.do == None):
+            return
+
+        self.do.prepared(self.type) # 数据预处理
 
         # 分离训练和测试数据
         self.df_train, self.df_test = my_do.util.split(self.do.df, 0.6)
@@ -85,33 +80,60 @@ class model():
             # mx = zks.lstm010(num_in, num_out)
 
             mx = zks.lstm020typ(num_in, num_out)
-            mx.summary()
-            plot_model(mx, to_file = my_params.default_logpath + 'model.png')
-
-            print('\n#4 模型训练 fit')
-            tbCallBack = keras.callbacks.TensorBoard(log_dir = my_params.default_logpath, write_graph = True, write_images=True)
-            tn0 = arrow.now()
-            mx.fit(self.x_train, self.y_train, epochs = 500, batch_size = 512, callbacks = [tbCallBack])
-            tn = zt.timNSec('', tn0, True)
-
-            self.save(mx, model_filename)
         else:
             mx = self.setmod(model_filename)
+
+        mx.summary()
+        plot_model(mx, to_file = my_params.default_logpath + 'model.png')
+
+        print('\n#4 模型训练 fit')
+        tbCallBack = keras.callbacks.TensorBoard(log_dir = my_params.default_logpath, write_graph = True, write_images=True)
+        tn0 = arrow.now()
+        mx.fit(self.x_train, self.y_train, epochs = 500, batch_size = 512, callbacks = [tbCallBack])
+        tn = zt.timNSec('', tn0, True)
+        self.save(mx, model_filename)
 
         eva_obj = eva.evaluation(self.do)
         eva_obj.predict(mx, self.df_test, self.x_test)
 
-    def eva(self, mode_filename):
-        if my_tools.path_exists(mode_filename):
-            model = self.setmod(mode_filename)
+    def eva(self, mod_filename):
+        if my_tools.path_exists(mod_filename):
+            model = self.setmod(mod_filename)
         eva_obj = eva.evaluation(self.do)
 
         x_test = my_do.util.get_features(self.do.df, my_params.ohlc_lst + my_params.volume_lst + my_params.profit_lst)
         eva_obj.predict(model, self.do.df, x_test)
 
+    def predict(self, mod_filename):
+        if not my_tools.path_exists(mod_filename):
+            return
+
+        if (self.do == None):
+            return
+
+        self.do.prepared(self.type)  # 数据预处理
+
+        other_features_lst = my_params.ohlc_lst + my_params.volume_lst + my_params.profit_lst # + xagv_lst + ma100_lst + other_lst
+        x_df = my_do.util.get_features(self.do.df.tail(5), other_features_lst)
+
+        txn = x_df.shape[0]
+        x_lst = other_features_lst
+        num_in = len(x_lst)
+        x_df = x_df.reshape(txn, num_in, -1)
+        print(x_df)
+
+        mo = self.setmod(mod_filename)
+        y_df = mo.predict(x_df)
+        print(y_df)
+        return y_df
+
 ################################################################################
 
-def modeling(params):
+def initialize(type = "all"):
+    if type == "all":
+        my_do.download_all()
+
+def params_split(params):
     param_lst = []
     if "," in params:
         param_lst = params.split(",")
@@ -137,61 +159,69 @@ def modeling(params):
         if 'mod' in param.lower():
             modfile = param.split(":")[1]
 
-    mo = model(type, code, datafile, modfile)
-    mo.building()
+    return type, code, datafile, modfile
 
-#    if "," in params:
-#        model_lst = params.split(",")
-#    else:
-#        model_lst.append(my_params.default_model)
-#        model_lst.append(params)
-#
-#    mod_type = my_params.default_model
-#    data_filepath = ""
-#    mod_filepath = ""
-#
-#    for j in range(0, len(model_lst)):
-#        param = model_lst[j]
-#        suffix = os.path.splitext(param)[1]
-#        if len(suffix) <= 0:
-#            mod_type = param
-#        else:
-#            filepath = param
-#
-#            if '.csv' == suffix.lower():
-#                if not my_tools.path_exists(filepath):
-#                    filepath = my_params.g_config.day_path + filepath
-#                if not my_tools.path_exists(filepath):
-#                    print(filepath + " is not exists")
-#                    return
-#
-#                data_filepath = filepath
-#
-#            if '.mod' == suffix.lower():
-#                mod_filepath = filepath
-#
-#    mo = model()
-#    if len(data_filepath) > 0:
-#        mo.setdata(data_filepath)
-#
-#    if len(mod_filepath) <= 0:
-#        mod_filepath = filepath + ".mod"
-#
-#    mo.modeling(mod_type)
-#    mo.building(mod_filepath)
+def modeling(params):
+    type, code, datafile, modfile = params_split(params)
+
+    if len(code) > 0 and len(datafile) <= 0: # 有代码没数据文件则先下载
+        _, datafile = my_do.download_from_code(code, '2007-01-01')
+
+    if len(datafile) > 0:
+        if not my_tools.path_exists(datafile):
+            datafile = os.path.join(my_params.g.config.day_path, datafile)
+    if not my_tools.path_exists(datafile):
+        my_params.g.log.error("can't find data file: " + datafile)
+        return
+
+    if len(code) <= 0 and len(datafile) > 0:
+        code, _ = my_tools.get_code_from_filename(datafile)
+    if len(modfile) <= 0 and len(code) > 0:
+        modfile = my_params.g.config.mod_path + code + ".h5"
+
+    mo = model(type, datafile)
+    mo.modeling(modfile)
+
+def predict(params):
+    type, code, datafile, modfile = params_split(params)
+
+    if len(code) > 0 and len(datafile) <= 0: # 有代码没数据文件则先下载
+        _, datafile = my_do.download_from_code(code, '2007-01-01')
+
+    if len(datafile) > 0:
+        if not my_tools.path_exists(datafile):
+            datafile = os.path.join(my_params.g.config.day_path, datafile)
+    if not my_tools.path_exists(datafile):
+        my_params.g.log.error("can't find data file: " + datafile)
+        return
+
+    if len(code) <= 0 and len(datafile) > 0:
+        code, _ = my_tools.get_code_from_filename(datafile)
+    if len(modfile) <= 0 and len(code) > 0:
+        modfile = my_params.g.config.mod_path + code + ".h5"
+
+    if not my_tools.path_exists(modfile):
+        return False
+
+    mo = model(type, datafile)
+    mo.predict(modfile)
 
 ################################################################################
 
 def main(argv):
     try:
-        options, args = getopt.getopt(argv, "m:", ["modeling="])
+        options, args = getopt.getopt(argv, "im:p:", ["initialize", "modeling=", "predict="])
 
     except getopt.GetoptError:
         sys.exit()
 
     for name, value in options:
+        if name in ("-i", "--initialize"):
+            initialize("all")
         if name in ("-m", "--modeling"):
             modeling(value)
+        if name in ("-p", "--predict"):
+            predict(value)
 
 if __name__ == '__main__':
     main(sys.argv[1:])
