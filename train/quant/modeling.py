@@ -145,19 +145,29 @@ def prepared(params):
     if "|" in params:
         param_lst = params.split("|")
 
+    def get_param(param):
+        type = "rate"
+        code = ""
+        datafile = ""
+        modfile = ""
+        if 'type' == param[0]:
+            type = param[1]
+        if 'code' == param[0]:
+            code = param[1]
+        if 'data' == param[0]:
+            datafile = param[1]
+        if 'mod' == param[0]:
+            modfile = param[1]
+
+        return type, code, datafile, modfile
+
     if len(param_lst) < 1:
-        code = params
+        param = my_tools.params_split(params)
+        type, code, datafile, modfile = get_param(param)
     else:
         for j in range(0, len(param_lst)):
-            param = param_lst[j]
-            if 'type' in param.lower():
-                type = param.split(":")[1]
-            if 'code' in param.lower():
-                code = param.split(":")[1]
-            if 'data' in param.lower():
-                datafile = param.split(":")[1]
-            if 'mod' in param.lower():
-                modfile = param.split(":")[1]
+            param = my_tools.params_split(param_lst[j])
+            type, code, datafile, modfile = get_param(param)
 
     if len(code) > 0 and len(datafile) <= 0: # 有代码没数据文件则先下载
         _, datafile = my_do.download_from_code(code, '2007-01-01')

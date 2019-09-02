@@ -2,6 +2,8 @@
 import os
 import time
 
+def params_split(params, flag = ':'):
+    return params.split(flag)
 
 def get_code_from_filename(filepath):
     path, filename = os.path.split(filepath)
