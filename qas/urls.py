@@ -19,6 +19,7 @@ from predict import views as predict_views
 
 urlpatterns = [
     path('', predict_views.index),
+    path('init/', predict_views.init),
     path("predict/", include('predict.urls')),
     path('admin/', admin.site.urls),
 ]

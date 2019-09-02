@@ -110,5 +110,18 @@ def index(request):
 
     my_params.g.log.info("request stock_code: " + stock_code)
 
-
     return HttpResponse(u"欢迎光临")
+
+def init_db():
+    data_frame = pd.read_csv(my_params.default_initcode_filename, index_col=False, encoding='gbk')
+    for index, row in data_frame.iterrows():
+        Company.objects.create(name=row['name'], stock_code=row['code'])
+        print(row['code'], ':', row['name'])
+
+def init(request):
+    init_db()
+
+    # p = Company(name = "索菲亚", stock_code = 002572)
+    # p.save()
+
+    return HttpResponse(u"初始化")
