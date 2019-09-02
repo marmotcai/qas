@@ -66,13 +66,13 @@ def evaluation(params):
         return
 
     if not my_tools.path_exists(mod_filepath):
-        mod_filepath = my_params.g_config.day_path + mod_filepath
+        mod_filepath = my_params.g_config.stk_path + mod_filepath
     if not my_tools.path_exists(mod_filepath):
         print(mod_filepath + " is not exists")
         return
 
     if not my_tools.path_exists(data_filepath):
-        data_filepath = my_params.g_config.day_path + data_filepath
+        data_filepath = my_params.g_config.stk_path + data_filepath
     if not my_tools.path_exists(data_filepath):
         print(data_filepath + " is not exists")
         return
@@ -98,11 +98,11 @@ class process(multiprocessing.Process):
     def run(self):
         subprocess.check_call(self.args)
 
-def loadconfig(filename):
-    my_params.g_config.load_config(filename)
+def loadconfig_and_run(filename):
+    my_params.g.config.load_config(filename)
 
-    for index in range(0, len(my_params.g_config.schedules)):
-        cmder = my_params.g_config.schedules[index]
+    for index in range(0, len(my_params.g.config.schedules)):
+        cmder = my_params.g.config.schedules[index]
         at = cmder.time.split(",")
         cmdstr = cmder.cmd.split(",")
 
@@ -114,6 +114,10 @@ def loadconfig(filename):
             cmdstr = ""
 
         schedule(at, cmdstr, args)
+
+    while True:
+        sc.run_pending()
+        time.sleep(5)
 
 def schedule(at, cmd, args):
     if len(at) > 0 and at[0] in ("seconds"):
@@ -127,10 +131,6 @@ def schedule(at, cmd, args):
 
     if len(at) > 0 and at[0] in ("day"):
         sc.every().day.at(at[1]).do(main, cmd, args)
-
-    while True:
-        sc.run_pending()
-        time.sleep(5)
 
 def main(cmd, argv):
     if len(cmd) > 0:
@@ -155,7 +155,7 @@ def main(cmd, argv):
         if name in ("-i", "--initialize"):
             my_mo.main(argv)
         if name in ("-l", "--load"):
-            loadconfig(value)
+            loadconfig_and_run(value)
         if name in ("-s", "--setting"):
             setting(value)
         if name in ("-t", "--test"):

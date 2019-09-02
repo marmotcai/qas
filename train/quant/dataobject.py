@@ -30,12 +30,14 @@ class download():
 
         self.checkdir(my_params.g.config.data_path)
         dler.down_stk_base(my_params.g.config.data_path)
-        dler.down_stk_pool(my_params.g.config.data_path,
-                           my_params.g.config.data_path + my_params.default_stk_base_filename)
+        dler.down_stk_pool(my_params.g.config.stk_path,
+                           my_params.g.config.data_path + my_params.default_stk_base_filename, xtyp = 'D')
 
     def download_code(self, downpath, code, tim0):
+        filename = downpath + code + '.csv'
+
         self.checkdir(downpath)
-        return zddown.down_stk010(downpath, code, 'D', tim0);
+        return zddown.down_stk010(filename, code, 'D', tim0);
 
     def download_inx(self, downpath = my_params.default_datapath, filename = "inx_code.csv"):
         if my_tools.path_exists(filename) == False:
@@ -60,9 +62,9 @@ class download():
 
 ################################################################################
 
-def download_all():
+def download_all(tim0 = '2007-01-01'):
     down_obj = download()
-    down_obj.download_all('2007-01-01')
+    down_obj.download_all(tim0)
 
 def download_from_path(path):
     for root, dirs, files in os.walk(path):
@@ -94,13 +96,13 @@ def download_from_inxfile(filepath):
 
     down_obj = download()
     if type == "inx":
-        down_obj.download_inx(my_params.g.config.day_path, filename)
+        down_obj.download_inx(my_params.g.config.inx_path, filename)
     if type == "stk":
-        down_obj.downlaod_stk(my_params.g.config.day_path, filename)
+        down_obj.downlaod_stk(my_params.g.config.stk_path, filename)
 
-def download_from_code(code, tim0):
+def download_from_code(code, tim0 = '2007-01-01'):
     down_obj = download()
-    return down_obj.download_code(my_params.g.config.day_path, code, tim0)
+    return down_obj.download_code(my_params.g.config.stk_path, code, tim0)
 
 def main(argv):
     try:
@@ -110,7 +112,7 @@ def main(argv):
 
     for name, value in options:
         if name in ("-d", "--download"):
-            if value == "initialize":
+            if value == "init":
                 download_all()
             if my_tools.isint(value):
                 download_from_code(value)

@@ -121,7 +121,7 @@ def down_stk_inx(rdat, finx):
         
 #-------down_stk.day.xxx
 
-def down_stk010(rdat, xcod, xtyp, tim0 = '1994-01-01', tim1 = None, fgInx = False):
+def down_stk010(down_filepath, xcod, xtyp, tim0 = '1994-01-01', tim1 = None, fgInx = False):
     ''' 中国A股数据下载子程序
     【输入】
         xcod:股票代码
@@ -130,12 +130,11 @@ def down_stk010(rdat, xcod, xtyp, tim0 = '1994-01-01', tim1 = None, fgInx = Fals
             D=日 W=周 M=月 ；5=5分钟 15=15分钟 ，30=30分钟 60=60分钟
 
     '''
-    fss = rdat + xcod + '.csv'
-    xfg = os.path.exists(fss); xd0 = []; xd = [];
+    xfg = os.path.exists(down_filepath); xd0 = []; xd = [];
     if xfg:
-        xd0, tim0 = zdat.df_rdcsv_tim0(fss, 'date', tim0)
+        xd0, tim0 = zdat.df_rdcsv_tim0(down_filepath, 'date', tim0)
         
-    print('\t', xfg, fss, ",", tim0)
+    print('\t', xfg, down_filepath, ",", tim0)
     #-----------    
     try:
         xdk = ts.get_k_data(xcod, index = fgInx, start = tim0, end = tim1, ktype = xtyp);
@@ -146,11 +145,11 @@ def down_stk010(rdat, xcod, xtyp, tim0 = '1994-01-01', tim1 = None, fgInx = Fals
             xd = zdat.df_xappend(xd, xd0, 'date')
             #
             xd = xd.sort_values(['date'], ascending = False);
-            xd.to_csv(fss, index = False, encoding = 'gbk')
+            xd.to_csv(down_filepath, index = False, encoding = 'gbk')
     except IOError: 
         pass # skip,error
            
-    return xd, fss
+    return xd, down_filepath
 
 def down_stk_all(rdat, finx, xtyp = 'D', fgInx = False):
     '''

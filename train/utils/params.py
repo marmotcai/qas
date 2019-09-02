@@ -21,6 +21,7 @@ default_section_schedule = 'schedule_'
 
 default_modpath = 'mod/'
 default_daypath = 'day/'
+default_stkpath = 'stk/'
 default_inxpath = 'inx/'
 default_inx_filename = 'my_inx_code.csv'
 default_stk_inx_filename = 'my_stk_inx.csv'
@@ -86,7 +87,7 @@ class config:
     def clear(self):
 
         self.data_path = ""
-        self.day_path = ""
+        self.stk_path = ""
         self.inx_path = ""
 
         self.schedules = []
@@ -97,6 +98,7 @@ class config:
         self.conf.set(default_section_setting, 'datapath', default_datapath)
         self.conf.set(default_section_setting, 'modpath', default_datapath + default_modpath)
         self.conf.set(default_section_setting, 'daypath', default_datapath + default_daypath)
+        self.conf.set(default_section_setting, 'stkpath', default_datapath + default_stkpath)
         self.conf.set(default_section_setting, 'inxpath', default_datapath + default_inxpath)
 
         section_schedule = default_section_schedule + "0"
@@ -114,7 +116,7 @@ class config:
         self.log_file = self.conf.get(default_section_setting, 'logfile')
         self.data_path = self.conf.get(default_section_setting, 'datapath')
         self.mod_path = self.conf.get(default_section_setting, 'modpath')
-        self.day_path = self.conf.get(default_section_setting, 'daypath')
+        self.stk_path = self.conf.get(default_section_setting, 'stkpath')
         self.inx_path = self.conf.get(default_section_setting, 'inxpath')
 
         self.schedules = []
@@ -142,7 +144,7 @@ class config:
         print("log_file:    " + self.log_file)
         print("data_path:   " + self.data_path)
         print("mod_path:   " + self.mod_path)
-        print("day_path:    " + self.day_path)
+        print("stk_path:    " + self.stk_path)
         print("inx_path:    " + self.inx_path)
 
         print("schedule count: " +  str(len(self.schedules)))

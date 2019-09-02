@@ -6,7 +6,7 @@ from train.utils import tools as my_tools
 
 class logger():
     def __init__(self, logfilename, appname = "", level = logging.INFO):
-        my_tools.mkdir(logfilename)
+        my_tools.check_path_exists(logfilename)
 
         if len(appname) <= 0: appname = __name__
         self.logger = logging.getLogger(appname)

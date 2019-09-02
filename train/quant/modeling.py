@@ -133,7 +133,12 @@ def initialize(type = "all"):
     if type == "all":
         my_do.download_all()
 
-def params_split(params):
+def prepared(params):
+    type = "rate"
+    code = ""
+    datafile = ""
+    modfile = ""
+
     param_lst = []
     if "," in params:
         param_lst = params.split(",")
@@ -141,35 +146,25 @@ def params_split(params):
         param_lst = params.split("|")
 
     if len(param_lst) < 1:
-        my_params.g.log.error("modeling params is error!")
-        return
-
-    type = "rate"
-    code = ""
-    datafile = ""
-    modfile = ""
-    for j in range(0, len(param_lst)):
-        param = param_lst[j]
-        if 'type' in param.lower():
-            type = param.split(":")[1]
-        if 'code' in param.lower():
-            code = param.split(":")[1]
-        if 'data' in param.lower():
-            datafile = param.split(":")[1]
-        if 'mod' in param.lower():
-            modfile = param.split(":")[1]
-
-    return type, code, datafile, modfile
-
-def modeling(params):
-    type, code, datafile, modfile = params_split(params)
+        code = params
+    else:
+        for j in range(0, len(param_lst)):
+            param = param_lst[j]
+            if 'type' in param.lower():
+                type = param.split(":")[1]
+            if 'code' in param.lower():
+                code = param.split(":")[1]
+            if 'data' in param.lower():
+                datafile = param.split(":")[1]
+            if 'mod' in param.lower():
+                modfile = param.split(":")[1]
 
     if len(code) > 0 and len(datafile) <= 0: # 有代码没数据文件则先下载
         _, datafile = my_do.download_from_code(code, '2007-01-01')
 
     if len(datafile) > 0:
         if not my_tools.path_exists(datafile):
-            datafile = os.path.join(my_params.g.config.day_path, datafile)
+            datafile = os.path.join(my_params.g.config.stk_path, datafile)
     if not my_tools.path_exists(datafile):
         my_params.g.log.error("can't find data file: " + datafile)
         return
@@ -178,27 +173,17 @@ def modeling(params):
         code, _ = my_tools.get_code_from_filename(datafile)
     if len(modfile) <= 0 and len(code) > 0:
         modfile = my_params.g.config.mod_path + code + ".h5"
+
+    return type, code, datafile, modfile
+
+def modeling(params):
+    type, code, datafile, modfile = prepared(params)
 
     mo = model(type, datafile)
     mo.modeling(modfile)
 
 def predict(params):
-    type, code, datafile, modfile = params_split(params)
-
-    if len(code) > 0 and len(datafile) <= 0: # 有代码没数据文件则先下载
-        _, datafile = my_do.download_from_code(code, '2007-01-01')
-
-    if len(datafile) > 0:
-        if not my_tools.path_exists(datafile):
-            datafile = os.path.join(my_params.g.config.day_path, datafile)
-    if not my_tools.path_exists(datafile):
-        my_params.g.log.error("can't find data file: " + datafile)
-        return
-
-    if len(code) <= 0 and len(datafile) > 0:
-        code, _ = my_tools.get_code_from_filename(datafile)
-    if len(modfile) <= 0 and len(code) > 0:
-        modfile = my_params.g.config.mod_path + code + ".h5"
+    type, code, datafile, modfile = prepared(params)
 
     if not my_tools.path_exists(modfile):
         return False

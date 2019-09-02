@@ -55,3 +55,8 @@ class PredictData(models.Model):
 
     def get_data(self):
         return json.loads(self.data)  # 可以将字符串 转为list或dict类型
+
+class RatePredictData(models.Model):
+    company = models.ForeignKey(Company, on_delete = models.CASCADE)
+    data = models.TextField()  # 字符串类型
+    start_date = models.CharField(max_length = 30)

@@ -1,5 +1,7 @@
 
 import os
+import time
+
 
 def get_code_from_filename(filepath):
     path, filename = os.path.split(filepath)
@@ -15,22 +17,18 @@ def check_path_exists(filepath):
     return True
 
 def mkdir(path):
-    if not os.path.isdir(path):
-        path = os.path.dirname(path)
-    # 去除首位空格
-    path = path.strip()
-    # 去除尾部 \ 符号
-    path = path.rstrip("\\")
+    path = path.strip() # 去除首位空格
+    path = path.rstrip("\\") # 去除尾部 \ 符号
     # 判断结果
     if not os.path.exists(path):
-        # 如果不存在则创建目录
-        os.makedirs(path)
-        return True
-    else:
-        return False
+        os.makedirs(path) # 如果不存在则创建目录
 
 def path_exists(path):
     return os.path.exists(path)
+
+def getfiletime(path):
+    timestamp = os.path.getmtime(path)
+    return timestamp, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))
 
 def isint(num):
     try:
