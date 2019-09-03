@@ -1,0 +1,97 @@
+{
+	"general": {
+        "logpath": "./data/log/",
+		"logfile": "$TIME.log",
+
+		"schedule": [
+			{
+				"cmd": "python,./train/training.py -i",
+				"at": "day,08:30"
+			},
+			{
+				"cmd": "python,./train/training.py -m 601988",
+				"at": "day,19:00"
+			}
+		]
+	},
+	"pd": {
+		"max_rows": "10",
+		"max_row.format": "{:.1f}"
+	},
+	"data": {
+		"base": "./data/",
+		"mod": "./mod/",
+		"stk": "./stk/",
+		"inx": "./inx/",
+		"inx_filename": "my_inx_code.csv",
+		"stk_inx_filename": "my_stk_inx.csv",
+		"stk_base_filename": "my_stk_base.csv",
+		"stk_code_filename": "my_stk_code.csv",
+		"filename": "drjt_600718_stock.csv",
+		"ohlc": [
+			"open", "high", "low", "close"
+		],
+		"dohlc": [
+			"date", "open", "high", "low", "close"
+		],
+		"ohlcv": [
+			"open", "high", "low", "close", "volume"
+		],
+		"dohlcv": [
+			"date", "open", "high", "low", "close", "volume"
+		],
+        "profit": [
+            "next_profit_1", "next_profit_2", "next_profit_3", "next_profit_4", "next_profit_5", "next_profit_6", "next_profit_7", "next_profit_8", "next_profit_9", "next_profit_10"
+        ],
+		"columns": [
+			"Close","Open","High","Low"
+		],
+		"sequence_length": 30,
+		"train_test_split": 0.85,
+		"normalise": true
+	},
+	"training": {
+		"epochs": 1,
+		"batch_size": 8
+	},
+	"model": {
+		"type": "rate",
+		"loss": "mse",
+		"optimizer": "adam",
+		"save_dir": "saved_models",
+		"layers": [
+			{
+				"type": "lstm",
+				"neurons": 100,
+				"input_timesteps": 29,
+				"input_dim": 4,
+				"return_seq": true
+			},
+			{
+				"type": "dropout",
+				"rate": 0.2
+			},
+			{
+				"type": "lstm",
+				"neurons": 100,
+				"return_seq": true
+			},
+			{
+				"type": "lstm",
+				"neurons": 100,
+				"return_seq": false
+			},
+			{
+				"type": "dropout",
+				"rate": 0.2
+			},
+			{
+				"type": "dense",
+				"neurons": 1,
+				"activation": "linear"
+			}
+		]
+	},
+    "companies":{"600718":"drjt","000651":"gldq","600839":"scch","600320":"zhzg","601988":"zgyh",
+                 "000066": "zgcc","601766":"zgzc","601390":"zgzt","000768":"zhfj","000063":"zxtx"}
+}

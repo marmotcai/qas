@@ -11,7 +11,7 @@ from train.vendor import ztools as zt
 from train.vendor import ztools_data as zdat
 from train.vendor import ztools_datadown as zddown
 
-from train.utils import params as my_params
+from train import global_obj as my_global
 from train.utils import tools as my_tools
 from train.quant import downloader as dler
 
@@ -19,19 +19,19 @@ from train.quant import downloader as dler
 
 class download():
     def __init__(self):
-        my_params.g.log.info("start download ...")
+        my_global.g.log.info("start download ...")
 
     def checkdir(self, path): # 创建目录
         if my_tools.path_exists(path) == False:
             my_tools.mkdir(path)
 
     def download_all(self, tim0 = '1994-01-01'):
-        my_params.g.log.info("download all data from " + tim0)
+        my_global.g.log.info("download all data from " + tim0)
 
-        self.checkdir(my_params.g.config.data_path)
-        dler.down_stk_base(my_params.g.config.data_path)
-        dler.down_stk_pool(my_params.g.config.stk_path,
-                           my_params.g.config.data_path + my_params.default_stk_base_filename, xtyp = 'D')
+        self.checkdir(my_global.g.config.data_path)
+        dler.down_stk_base(my_global.g.config.data_path)
+        dler.down_stk_pool(my_global.g.config.stk_path,
+                           my_global.g.config.data_path + my_global.g.config['data']['stk_base_filename'], xtyp = 'D')
 
     def download_code(self, downpath, code, tim0):
         filename = downpath + code + '.csv'
@@ -39,9 +39,9 @@ class download():
         self.checkdir(downpath)
         return zddown.down_stk010(filename, code, 'D', tim0);
 
-    def download_inx(self, downpath = my_params.default_datapath, filename = "inx_code.csv"):
+    def download_inx(self, downpath = my_global.default_datapath, filename = "inx_code.csv"):
         if my_tools.path_exists(filename) == False:
-            my_params.g.log.error("inx file is not exists and exit")
+            my_global.g.log.error("inx file is not exists and exit")
             return False
 
         self.checkdir(downpath)
@@ -49,9 +49,9 @@ class download():
         zddown.down_stk_inx(downpath, filename);
         return True
 
-    def downlaod_stk(self, downpath = my_params.default_datapath, filename = "stk_code.csv"):
+    def downlaod_stk(self, downpath = my_global.default_datapath, filename = "stk_code.csv"):
         if my_tools.path_exists(filename) == False:
-            my_params.g.log.error("stk file is not exists and exit")
+            my_global.g.log.error("stk file is not exists and exit")
             return False
 
         if my_tools.path_exists(downpath) == False:
@@ -85,24 +85,24 @@ def download_from_inxfile(filepath):
         filename = filepath
 
     if len(filename) <= 0:
-        my_params.g.log.error("download params error!")
+        my_global.g.log.error("download params error!")
         return
 
     if not my_tools.path_exists(filename):
-        filename = my_params.g.config.data_path + filename
+        filename = my_global.g.config.data_path + filename
     if not my_tools.path_exists(filename):
-        my_params.g.log.error(filename + " is not exists")
+        my_global.g.log.error(filename + " is not exists")
         return
 
     down_obj = download()
     if type == "inx":
-        down_obj.download_inx(my_params.g.config.inx_path, filename)
+        down_obj.download_inx(my_global.g.config.inx_path, filename)
     if type == "stk":
-        down_obj.downlaod_stk(my_params.g.config.stk_path, filename)
+        down_obj.downlaod_stk(my_global.g.config.stk_path, filename)
 
 def download_from_code(code, tim0 = '2007-01-01'):
     down_obj = download()
-    return down_obj.download_code(my_params.g.config.stk_path, code, tim0)
+    return down_obj.download_code(my_global.g.stk_path, code, tim0)
 
 def main(argv):
     try:
@@ -147,7 +147,8 @@ class util():
 
     # 计算均值
     def prepared_avg(df):
-        df['ohlc_avg'] = df[my_params.ohlc_lst].mean(axis = 1).round(2) # 当天OHLC均值
+        ohlc = my_global.g.config['data']['ohlc']
+        df['ohlc_avg'] = df[ohlc].mean(axis = 1).round(2) # 当天OHLC均值
         df['dprice_max'] = df['ohlc_avg'].rolling(10).max()
         df['dprice_min'] = df['ohlc_avg'].rolling(10).min()
         df['dprice_avg'] = df['ohlc_avg'].rolling(10).mean()

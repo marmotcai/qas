@@ -9,8 +9,11 @@ from train.vendor import ztools as zt
 from train.vendor import zai_keras as zks
 from train.quant import dataobject as my_do
 from train.quant import evaluation as eva
-from train.utils import params as my_params
+from train.quant import model as my_model
+from train import global_obj as my_global
 from train.utils import tools as my_tools
+
+from LSTMPredictStock.core.data_processor import DataLoader
 
 ################################################################################
 
@@ -18,7 +21,7 @@ class model():
     def __init__(self, type, datafile):
         self.do = None
 
-        self.type = my_params.default_model_type
+        self.type = my_global.g.config['model']['type']
         if len(type) > 0:
             self.type = type
 
@@ -49,7 +52,7 @@ class model():
         self.df_train, self.df_test = my_do.util.split(self.do.df, 0.6)
 
         # 构建训练特征数据
-        other_features_lst = my_params.ohlc_lst + my_params.volume_lst + my_params.profit_lst # + xagv_lst + ma100_lst + other_lst
+        other_features_lst = my_global.g.config['data']['ohlcv'] + my_global.g.config['data']['profit'] # + xagv_lst + ma100_lst + other_lst
         self.x_train = my_do.util.get_features(self.df_train, other_features_lst)
         self.x_test = my_do.util.get_features(self.df_test, other_features_lst)
 
@@ -93,10 +96,10 @@ class model():
             mx = self.setmod(model_filename)
 
         mx.summary()
-        plot_model(mx, to_file = my_params.default_logpath + 'model.png')
+        plot_model(mx, to_file = my_global.g.log_path + 'model.png')
 
         print('\n#4 模型训练 fit')
-        tbCallBack = keras.callbacks.TensorBoard(log_dir = my_params.default_logpath, write_graph = True, write_images=True)
+        tbCallBack = keras.callbacks.TensorBoard(log_dir = my_global.g.log_path, write_graph = True, write_images=True)
         tn0 = arrow.now()
         mx.fit(self.x_train, self.y_train, epochs = 500, batch_size = 512, callbacks = [tbCallBack])
         tn = zt.timNSec('', tn0, True)
@@ -110,7 +113,7 @@ class model():
             model = self.setmod(mod_filename)
         eva_obj = eva.evaluation(self.do)
 
-        x_test = my_do.util.get_features(self.do.df, my_params.ohlc_lst + my_params.volume_lst + my_params.profit_lst)
+        x_test = my_do.util.get_features(self.do.df, my_global.g.config['data']['ohlcv'] + my_global.g.config['data']['profit'])
         eva_obj.predict(model, self.do.df, x_test)
 
     def predict(self, mod_filename):
@@ -122,7 +125,7 @@ class model():
 
         self.do.prepared(self.type, action='predict') # 数据预处理
 
-        other_features_lst = my_params.ohlc_lst + my_params.volume_lst + my_params.profit_lst # + xagv_lst + ma100_lst + other_lst
+        other_features_lst = my_global.g.config['data']['ohlcv'] + my_global.g.config['data']['profit'] # + xagv_lst + ma100_lst + other_lst
         x_df = my_do.util.get_features(self.do.df.tail(5), other_features_lst)
 
         txn = x_df.shape[0]
@@ -186,17 +189,34 @@ def prepared(params):
 
     if len(datafile) > 0:
         if not my_tools.path_exists(datafile):
-            datafile = os.path.join(my_params.g.config.stk_path, datafile)
+            datafile = os.path.join(my_global.g.stk_path, datafile)
     if not my_tools.path_exists(datafile):
-        my_params.g.log.error("can't find data file: " + datafile)
+        my_global.g.log.error("can't find data file: " + datafile)
         return
 
     if len(code) <= 0 and len(datafile) > 0:
         code, _ = my_tools.get_code_from_filename(datafile)
     if len(modfile) <= 0 and len(code) > 0:
-        modfile = my_params.g.config.mod_path + code + ".h5"
+        modfile = my_global.g.mod_path + code + ".h5"
 
     return type, code, datafile, modfile
+
+def train(params):
+    type, code, datafile, modfile = prepared(params)
+
+    m = my_model.Model()
+    m.build_model(my_global.g.config)  # 根据配置文件新建模型
+
+    split = my_global.g.config['data']['train_test_split']
+    if not predict:
+        split = 1  # 若不评估模型准确度，则将全部历史数据用于训练
+
+    data = DataLoader(  # 从本地加载训练和测试数据
+        my_global.g.stk_path + code + ".csv",  # configs['data']['filename']
+        split,
+        my_global.g.config['data']['ohlc']  # 选择某些列的数据进行训练
+    )
+    print(data.tail(5))
 
 def modeling(params):
     type, code, datafile, modfile = prepared(params)
@@ -227,7 +247,8 @@ def main(argv):
         if name in ("-i", "--initialize"):
             initialize("all")
         if name in ("-m", "--modeling"):
-            modeling(value)
+            # modeling(value)
+            train(value)
         if name in ("-p", "--predict"):
             predict(value)
 

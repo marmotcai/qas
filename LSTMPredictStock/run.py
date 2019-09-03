@@ -257,4 +257,4 @@ def get_parent_dir():   # 当前文件的父目录绝对路径
 if __name__ == '__main__':
     # train_all_stock()
     # predict_all_stock()
-    train_model("000063", predict=False)
+    train_model("000063", predict=True)

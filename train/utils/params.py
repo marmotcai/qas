@@ -159,7 +159,7 @@ class config:
 
         print("-----------------------------")
 
-g = Global()
-g.config.print_current_information()
+# g = Global()
+# g.config.print_current_information()
 
 ################################################################################

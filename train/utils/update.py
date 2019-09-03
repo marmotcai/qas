@@ -13,7 +13,7 @@ default_gitdir = '/home/x/workspace/qas'
 
 def update(githuburl):
 
-    my_params.g.log.info("start git pull..")
+    my_global.g.log.info("start git pull..")
 
     repo = Repo(default_gitdir)
 
@@ -22,7 +22,7 @@ def update(githuburl):
     master = head.reference
     log = master.log()
     newhexsha = (log[-1].newhexsha)
-    my_params.g.log.info("new hexsha: " + newhexsha)
+    my_global.g.log.info("new hexsha: " + newhexsha)
 
     files = []
     origin = repo.remotes.origin
@@ -30,13 +30,13 @@ def update(githuburl):
     for single_fetch_info in fetch_info:
         for diff in single_fetch_info.commit.diff(
                 single_fetch_info.old_commit):
-            my_params.g.log.info("Found diff: " + str(diff))
+            my_global.g.log.info("Found diff: " + str(diff))
             if not diff.a_blob is None:
                 if not diff.a_blob.path in files:
-                    my_params.g.log.info("pull file: " + diff.a_blob.path)
+                    my_global.g.log.info("pull file: " + diff.a_blob.path)
                     files.append(diff.a_blob.path)
 
-    my_params.g.log.info("stop git pull (file count: {})".format(str(len(files))))
+    my_global.g.log.info("stop git pull (file count: {})".format(str(len(files))))
 
 def main(argv):
     try:

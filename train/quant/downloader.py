@@ -2,10 +2,13 @@ import os
 import tushare as ts
 import pandas as pd
 import numpy as np
-from train.utils import params as my_params
+from train import global_obj as my_global
 from train.utils import tools as my_tools
 
-def down_stk_base(downpath = my_params.g.config.data_path):
+def down_stk_base(downpath = my_global.default_datapath,
+                  inxfile = my_global.default_stk_inx_filename,
+                  basefile = my_global.default_stk_base_filename,
+                  codefile = my_global.default_stk_code_filename):
     '''
     下载时基本参数数据时，有时会出现错误提升：
           timeout: timed out
@@ -13,13 +16,13 @@ def down_stk_base(downpath = my_params.g.config.data_path):
     '''
     rss = downpath
     #
-    fss = rss + my_params.default_stk_inx_filename;
+    fss = rss + inxfile
 
     dat = ts.get_index()
     dat.to_csv(fss, index = False, encoding = 'gbk', date_format = 'str');
 
     # =========
-    fss = rss + my_params.default_stk_base_filename;
+    fss = rss + basefile
     print(fss);
     dat = ts.get_stock_basics();
     dat.to_csv(fss, encoding = 'gbk', date_format = 'str');
@@ -28,7 +31,7 @@ def down_stk_base(downpath = my_params.g.config.data_path):
     d20 = dat.loc[:, c20]
     d20['code'] = d20.index;
 
-    fss = rss + my_params.default_stk_code_filename;
+    fss = rss + codefile;
     print(fss);
     d20 = d20.sort_index()  # values(['date'], ascending = False);
     d20.to_csv(fss, index = False, encoding = 'gbk', date_format = 'str');
@@ -54,11 +57,11 @@ def down_stk_base(downpath = my_params.g.config.data_path):
         dat.to_csv(fss, index = False, encoding = 'gbk', date_format = 'str');
     '''
 def get_stkDir(xtyp):
-    fgInx, xsub = False, my_params.g.config.stk_path
+    fgInx, xsub = False, my_global.config.stk_path
     if xtyp == 'index_cn': fgInx, xsub = True, 'inx/'
     elif xtyp == 'bond_cn': xsub = 'bond/'
     elif xtyp == 'etf_cn': xsub = 'etf/'
-    elif xtyp == 'stock_cn':xsub = my_params.g.config.stk_path
+    elif xtyp == 'stock_cn':xsub = my_global.config.stk_path
     else: xsub = ''
 
     return fgInx, xsub
@@ -80,7 +83,7 @@ def df_rdcsv_tim0(fss, ksgn, tim0):
             tim0 = s2.split(" ")[0]
     return xd0, tim0
 
-def df_xappend(df, df0, ksgn, num_round = 3, vlst = my_params.ohlcdv_lst):
+def df_xappend(df, df0, ksgn, num_round = 3, vlst = my_global.g.config['data']['dohlcv']):
     if (len(df0) > 0):
         df2 = df0.append(df)
         df2 = df2.sort_values([ksgn], ascending = True);
@@ -119,7 +122,7 @@ def down_stk_code(rdat, xcod, xtyp = 'D', fgInx = False):
         if len(xd) > 0:
             # print(xdk)
 
-            xd = xdk[my_params.ohlcdv_lst]
+            xd = xdk[my_global.g.config['data']['dohlcv']]
             xd = df_xappend(xd, xd0, 'date')
             #
             xd = xd.sort_values(['date'], ascending = False);

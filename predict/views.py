@@ -96,7 +96,7 @@ def home(request):
 
 def predict_stock_action(request):
     stock_code = request.POST.get('stock_code', None)
-    my_params.g.log.info("request stock_code: " + stock_code)
+    my_global.g.log.info("request stock_code: " + stock_code)
 
     recent_data, predict_data = get_hist_predict_data(stock_code)
     data = {"recent_data": recent_data, "stock_code": stock_code, "predict_data": predict_data}
@@ -108,7 +108,7 @@ def index(request):
     if (stock_code == None):
         return render(request, "predict/home.html")
 
-    my_params.g.log.info("request stock_code: " + stock_code)
+    my_global.g.log.info("request stock_code: " + stock_code)
 
     return HttpResponse(u"欢迎光临")
 
