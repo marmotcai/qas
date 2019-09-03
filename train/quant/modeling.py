@@ -1,5 +1,8 @@
-import sys, os
+import sys
+import os
+import math
 import getopt
+
 import arrow
 import keras
 from keras.utils import plot_model
@@ -207,16 +210,41 @@ def train(params):
     m = my_model.Model()
     m.build_model(my_global.g.config)  # 根据配置文件新建模型
 
+    predict = True
     split = my_global.g.config['data']['train_test_split']
     if not predict:
         split = 1  # 若不评估模型准确度，则将全部历史数据用于训练
 
-    data = DataLoader(  # 从本地加载训练和测试数据
-        my_global.g.stk_path + code + ".csv",  # configs['data']['filename']
-        split,
-        my_global.g.config['data']['ohlc']  # 选择某些列的数据进行训练
+    # 从本地加载训练和测试数据
+    data = DataLoader(datafile, split, my_global.g.config['data']['ohlc'] + my_global.g.config['data']['profit'])
+
+    # 训练模型：
+    # out-of memory generative training
+    steps_per_epoch = math.ceil(
+        (data.len_train - my_global.g.config['data']['sequence_length']) / my_global.g.config['training']['batch_size'])
+    m.train_generator(
+        data_gen=data.generate_train_batch(
+            seq_len=my_global.g.config['data']['sequence_length'],
+            batch_size=my_global.g.config['training']['batch_size'],
+            normalise=my_global.g.config['data']['normalise']
+        ),
+        epochs=my_global.g.config['training']['epochs'],
+        batch_size=my_global.g.config['training']['batch_size'],
+        steps_per_epoch=steps_per_epoch,
+        save_dir=my_global.g.mod_path,
+        save_name=code
     )
-    print(data.tail(5))
+
+    # 预测
+    if predict:
+        x_test, y_test = data.get_test_data(
+            seq_len=my_global.g.config['data']['sequence_length'],
+            normalise=my_global.g.config['data']['normalise']
+        )
+
+        predictions = model.predict_sequences_multiple(x_test, my_global.g.config['data']['sequence_length'],
+                                                       my_global.g.config['data']['sequence_length'])
+        print("训练：\n", predictions)
 
 def modeling(params):
     type, code, datafile, modfile = prepared(params)

@@ -224,6 +224,7 @@ class util():
             return df.head(dnum_test), df.tail(dnum_train - dnum_test)
         else:
             return df.sample(frac = frac, replace = True), df.sample(frac = 1 - frac, replace = True)
+
 ################################################################################
 
 class  train_data():
