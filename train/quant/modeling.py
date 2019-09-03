@@ -43,7 +43,7 @@ class model():
         if (self.do == None):
             return
 
-        self.do.prepared(self.type) # 数据预处理
+        self.do.prepared(self.type, action='modeling') # 数据预处理
 
         # 分离训练和测试数据
         self.df_train, self.df_test = my_do.util.split(self.do.df, 0.6)
@@ -56,13 +56,23 @@ class model():
         #############################################################################################################
 
         # 构建特征，也就是结果值Y
-        self.y_train = my_do.util.prepared_y(self.df_train, 'next_rate_10_type')
-        self.y_test = my_do.util.prepared_y(self.df_test, 'next_rate_10_type')
+        if self.type == 'rate':
+            self.y_train = my_do.util.prepared_y(self.df_train, 'next_rate_10_type', 'onehot')
+            self.y_test = my_do.util.prepared_y(self.df_test, 'next_rate_10_type', 'onehot')
 
-        y_lst = self.y_train[0]
-        x_lst = other_features_lst
+            y_lst = self.y_train[0]
+            x_lst = other_features_lst
 
-        num_in, num_out = len(x_lst), len(y_lst)
+            num_in, num_out = len(x_lst), len(y_lst)
+
+        if self.type == 'price':
+            self.y_train = my_do.util.prepared_y(self.df_train, 'next_profit_10')
+            self.y_test = my_do.util.prepared_y(self.df_test, 'next_profit_10')
+
+            y_lst = 1
+            x_lst = other_features_lst
+
+            num_in, num_out = len(x_lst), y_lst
 
         print('\n self.df_test.tail()', self.df_test.tail())
         print('\n self.x_train.shape,', self.x_train.shape)
@@ -78,7 +88,6 @@ class model():
         if not my_tools.path_exists(model_filename):
             # mx = zks.rnn010(num_in, num_out)
             # mx = zks.lstm010(num_in, num_out)
-
             mx = zks.lstm020typ(num_in, num_out)
         else:
             mx = self.setmod(model_filename)
@@ -111,7 +120,7 @@ class model():
         if (self.do == None):
             return
 
-        self.do.prepared(self.type)  # 数据预处理
+        self.do.prepared(self.type, action='predict') # 数据预处理
 
         other_features_lst = my_params.ohlc_lst + my_params.volume_lst + my_params.profit_lst # + xagv_lst + ma100_lst + other_lst
         x_df = my_do.util.get_features(self.do.df.tail(5), other_features_lst)
@@ -134,40 +143,43 @@ def initialize(type = "all"):
         my_do.download_all()
 
 def prepared(params):
-    type = "rate"
-    code = ""
-    datafile = ""
-    modfile = ""
-
     param_lst = []
-    if "," in params:
-        param_lst = params.split(",")
-    if "|" in params:
-        param_lst = params.split("|")
+    if "," in params: param_lst = params.split(",")
+    else:
+        if "|" in params: param_lst = params.split("|")
+        else:
+            param_lst.append(params)
 
-    def get_param(param):
-        type = "rate"
-        code = ""
-        datafile = ""
-        modfile = ""
-        if 'type' == param[0]:
-            type = param[1]
-        if 'code' == param[0]:
-            code = param[1]
-        if 'data' == param[0]:
-            datafile = param[1]
-        if 'mod' == param[0]:
-            modfile = param[1]
+    def get_param(param_lst):
+        type, code, datafile, modfile = "rate", "", "", ""
+
+        if len(param_lst) <= 1:
+            param = my_tools.params_split(param_lst[0])
+            param0 = param[0]
+            if len(param) > 1:
+                param0 = param[1]
+
+            if '.csv' in param0.lower():
+                datafile = param0
+            else:
+                code = param0
+
+        else:
+            for j in range(0, len(param_lst)):
+                param = my_tools.params_split(param_lst[j])
+                param0 = param[0]
+                if 'type' == param0:
+                    type = param[1]
+                if 'code' == param0:
+                    code = param[1]
+                if 'data' == param0:
+                    datafile = param[1]
+                if 'mod' == param0:
+                    modfile = param[1]
 
         return type, code, datafile, modfile
 
-    if len(param_lst) < 1:
-        param = my_tools.params_split(params)
-        type, code, datafile, modfile = get_param(param)
-    else:
-        for j in range(0, len(param_lst)):
-            param = my_tools.params_split(param_lst[j])
-            type, code, datafile, modfile = get_param(param)
+    type, code, datafile, modfile = get_param(param_lst)
 
     if len(code) > 0 and len(datafile) <= 0: # 有代码没数据文件则先下载
         _, datafile = my_do.download_from_code(code, '2007-01-01')
@@ -196,10 +208,11 @@ def predict(params):
     type, code, datafile, modfile = prepared(params)
 
     if not my_tools.path_exists(modfile):
-        return False
+        modeling(params)
 
     mo = model(type, datafile)
-    mo.predict(modfile)
+    y = mo.predict(modfile)
+    print(y)
 
 ################################################################################
 

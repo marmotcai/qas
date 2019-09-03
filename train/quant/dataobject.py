@@ -170,7 +170,6 @@ class util():
             j = num + i * step
             keyname_profit = 'next_profit_' + str(j)
             df[keyname_profit] = df['close'].shift(-1 * (j)).sub(df['close'])
-
         return df
 
     def prepared_next_rate(df, num = 5, count = 2, step = 5):
@@ -180,9 +179,7 @@ class util():
             keyname_rate = 'next_rate_' + str(j)
             df[keyname_profit] = df['close'].shift(-1 * (j)).sub(df['close'])
             df[keyname_rate] = df[keyname_profit].div(df['close'])
-
-        df['next_rate_10_type'] = df['next_rate_10'].apply(zt.iff3type, d0=0, d9=0.05, v3=3, v2=2, v1=1)  # 振幅分类器
-
+        df['next_rate_10_type'] = df['next_rate_10'].apply(zt.iff3type,  d0 = 0, d9 = 0.05, v3 = 3, v2 = 2, v1 = 1)  # 振幅分类器
         return df
 
     # 次日数据
@@ -195,15 +192,21 @@ class util():
 
     # 其它处理
     def prepared_other(df):
+        return df
+
+    def prepared_clean(df, type = 'dropna'):
         # 清除NaN值
-        df = df.fillna(method='pad')
-        df = df.fillna(method='bfill')
+        if type == 'dropna':
+            df = df.dropna(axis=0, how='any', inplace=False)  # 删除为空的行
+        else:
+            df = df.fillna(method='pad')
+            df = df.fillna(method='bfill')
+        #
         return df
 
     # 处理标签数据
-    def prepared_y(df, y_key, type = 'onehot'):
+    def prepared_y(df, y_key, type = ''):
         # 处理标签
-
         df['y'] = df[y_key] # 输出
 
         if (type == 'onehot'):
@@ -212,19 +215,21 @@ class util():
         else:
             return df['y']
 
-    def split(df, DC):
+    def split(df, frac, random = True):
         # 训练数据和测试数据分割
-        dnum_train = len(df.index)
-        dnum_test = round(dnum_train * DC)
-        return df.head(dnum_test), df.tail(dnum_train - dnum_test)
-
+        if not random:
+            dnum_train = len(df.index)
+            dnum_test = round(dnum_train * frac)
+            return df.head(dnum_test), df.tail(dnum_train - dnum_test)
+        else:
+            return df.sample(frac = frac, replace = True), df.sample(frac = 1 - frac, replace = True)
 ################################################################################
 
 class  train_data():
 
     def __init__(self, data_file = ""):
 
-        self.model_type = {'rate': self.model_rate, 'amp': self.model_amp}  # 定义策略执行函数
+        self.model_type = {'rate': self.model_rate, 'price': self.model_price, 'amp': self.model_amp}  # 定义策略执行函数
 
         if len(data_file) > 0:
             self.df = pd.read_csv(data_file, index_col = 0)
@@ -248,25 +253,42 @@ class  train_data():
     ################################################################################
 
     def model_rate(self, df):
-        self.df = self.df.sort_values('date')  # 日期排序
+        df = df.sort_values('date')  # 日期排序
+        df = util.prepared_pre_next(df)  # 前一天收盘价和后一天的开盘价
+        df = util.prepared_next_profit(df, 1, 10, 1)  # 计算第1天到第10天的收益值，从第1天开始，计算10次，步长为1天\
+        df = util.prepared_next_rate(df, 5, 2, 5)  # 计算第5天和第10天的收益率，从第5天开始，计算2次，步长为5天
+        df = util.prepared_avg(df)  # 填充均值
+        df = util.prepared_ma(df)  # 填充MA均线
+        df = util.prepared_amp(df)  # 填充最大振幅
+        df = util.prepared_next(df)  # 填充次日数据
+        df = util.prepared_other(df)  # 填充其它swi
+        return df
 
-        self.df = util.prepared_pre_next(self.df)  # 前一天收盘价和后一天的开盘价
-        self.df = util.prepared_next_profit(self.df, 1, 10, 1)  # 计算第5天和第10天的收益率，从第5天开始，计算2次，步长为5天
-        self.df = util.prepared_next_rate(self.df, 5, 2, 5)  # 计算第5天和第10天的收益率，从第5天开始，计算2次，步长为5天
-        self.df = util.prepared_avg(self.df)  # 填充均值
-        self.df = util.prepared_ma(self.df)  # 填充MA均线
-        self.df = util.prepared_amp(self.df)  # 填充最大振幅
-        self.df = util.prepared_next(self.df)  # 填充次日数据
-        self.df = util.prepared_other(self.df)  # 填充其它swi
+    def model_price(self, df):
+        df = df.sort_values('date')  # 日期排序
+        df = util.prepared_pre_next(df)  # 前一天收盘价和后一天的开盘价
+        df = util.prepared_next_profit(df, 1, 10, 1)  # 计算第1天到第10天的收益值，从第1天开始，计算10次，步长为1天\
+        df = util.prepared_next_rate(df, 5, 2, 5)  # 计算第5天和第10天的收益率，从第5天开始，计算2次，步长为5天
+        df = util.prepared_avg(df)  # 填充均值
+        df = util.prepared_ma(df)  # 填充MA均线
+        df = util.prepared_amp(df)  # 填充最大振幅
+        df = util.prepared_next(df)  # 填充次日数据
+        df = util.prepared_other(df)  # 填充其它swi
+        return df
 
     def model_amp(self, df):
-        self.df = self.df.sort_values('date')  # 日期排序
+        df = df.sort_values('date')  # 日期排序
+        return df
 
     ################################################################################
 
-    def prepared(self, model_type = 'rate'):
-        self.model_execution = self.model_type[model_type]
-        self.model_execution(self. df)
+    def prepared(self, model_type = 'rate', action = 'modeling'):
+        model_execution = self.model_type[model_type]
+        df = model_execution(self. df)
+        if action == 'modeling':
+            df = util.prepared_clean(df) # 清理数据
+        self.df = df
+        print(df.tail(5))
 
 ################################################################################
 

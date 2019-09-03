@@ -177,47 +177,43 @@ def iff2lessEQ(x,k0=1,v1=1,v0=0):
     return iff2(x<=k0,v1,v0)
 
 #def iff2x(x,k0=1,v1=1,v0=0):
-def iff2cmp(x,xop='=',k0=1,v1=1):    
+def iff2cmp(x, xop = '=', k0 = 1, v1 = 1):
     #
-    xfg=False
-    if xop=='>':xfg=x>k0
-    elif xop=='<':xfg=x<k0
-    elif xop=='=':xfg=(x==k0)
-    elif xop=='>=':xfg=(x>=k0)
-    elif xop=='<=':xfg=(x<=k0)
-    elif xop=='!=':xfg=(x!=k0);
+    xfg = False
+    if xop == '>': xfg = x > k0
+    elif xop == '<': xfg = x < k0
+    elif xop == '=': xfg = (x==k0)
+    elif xop == '>=': xfg = (x>=k0)
+    elif xop == '<=': xfg = (x<=k0)
+    elif xop == '!=': xfg = (x!=k0);
     #
     if xfg:
         #print('xx,',xfg,v1,x)
-        return iff2(xfg,v1,x)
+        return iff2(xfg, v1, x)
     else:
         return None
-                       
-                       
- 
-    
 #
-def iff2type(x,d0=100,v1=1,v0=0):
-    if x>d0:return v1
+
+def iff2type(x, d0 = 100, v1 = 1, v0 = 0):
+    if x > d0: return v1
     else: return v0      
 
-def iff3type(x,d0=95,d9=105,v3=3,v2=2,v1=1):
-    if x>d9:return v3
-    elif x<d0:return v1
+def iff3type(x, d0 = 95, d9 = 105, v3 = 3, v2 = 2, v1 = 1):
+    if x > d9: return v3
+    elif x < d0: return v1
     else: return v2      
     
-def iff2ntype(x0,v0=95,v9=105):
-    x=int(round(x0))
-    if x>v9:return v9
-    elif x<v0:return v0
+def iff2ntype(x0, v0 = 95, v9 = 105):
+    x = int(round(x0))
+    if x > v9: return v9
+    elif x < v0: return v0
     else: return x  
-    
-    
-def wait(n,mstr=''):
+
+def wait(n, mstr = ''):
     ''' 等待n秒，mstr为提示信息
     '''
 
-    if mstr !='':
+    if mstr != '':
         print(mstr);
         
     time.sleep(n)

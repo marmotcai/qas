@@ -7,8 +7,8 @@ RUN pip install --upgrade pip
 ENV WORK_DIR=/root
 WORKDIR $WORK_DIR
 
-# COPY requirements.txt ./
-# RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
 ########################################################
 

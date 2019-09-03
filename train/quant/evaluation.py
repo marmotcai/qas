@@ -28,7 +28,7 @@ class evaluation():
         dacc, dfx, a10 = ztq.ai_acc_xed2ext(df_x.y, df_x.y_pred, ky0 = 3, fgDebug = True)
 
         x1, x2 = df_x['y'].value_counts(), df_x['y_pred'].value_counts()
-        zt.prx('x1', x1);
+        zt.prx('x1', x1)
         zt.prx('x2', x2)
 
         print('\n', y_pred0)
