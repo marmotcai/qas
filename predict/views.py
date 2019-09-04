@@ -10,10 +10,9 @@ from django.shortcuts import render, get_object_or_404
 from datetime import datetime as dt
 from predict import models
 from .models import Company
-from LSTMPredictStock import run
 
-from train import global_obj as my_global
-from train.quant import manager as my_man
+from trendanalysis import global_obj as my_global
+from trendanalysis.core import manager as my_man
 
 LOCAL = False
 
@@ -44,7 +43,7 @@ def get_hist_predict_data(stock_code):
     if company.predictdata_set.count() <= 0:
         predict_data = models.PredictData()
         predict_data.company = company
-        predict_data.set_data(run.prediction(stock_code,pre_len=10))
+        predict_data.set_data(my_man.prediction(stock_code,pre_len=10))
         predict_data.save()
         predict_data = predict_data.get_data()
     else:
@@ -53,7 +52,7 @@ def get_hist_predict_data(stock_code):
             now = dt.now()
             start_date = dt.strptime(single.start_date,"%Y-%m-%d")
             if LOCAL & (now.date() > start_date.date()):  # 更新预测数据
-                single.set_data(run.prediction(stock_code, pre_len=10))
+                single.set_data(my_man.prediction(stock_code, pre_len=10))
                 single.save()
 
             predict_data = single.get_data()

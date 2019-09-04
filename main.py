@@ -8,13 +8,13 @@ import subprocess
 
 import schedule as sc
 
-from train import global_obj as my_global
+from trendanalysis import global_obj as my_global
 
-from train.quant import dataobject as my_do
-from train.quant import manager as my_man
+from trendanalysis.core import dataobject as my_do
+from trendanalysis.core import manager as my_man
 
-from train.utils import tools as my_tools
-from train.utils import update as my_update
+from trendanalysis.utils import tools as my_tools
+from trendanalysis.utils import update as my_update
 
 ################################################################################
 
