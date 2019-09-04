@@ -27,6 +27,8 @@
         <form id="commit_code" action="{% url 'predict:index' %}" method="post">
             {% csrf_token %}
             <select name="stock_code" style="width: 200px; text-align: center; padding:5px;">
+                <option id="300096" value="300096">易联众(300096)</option>
+                <option id="002572" value="002572">索菲亚(002572)</option>
                 <option id="600718" value="600718">东软集团(600718)</option>
                 <option id="000651" value="000651">格力电器(000651)</option>
                 <option id="600839" value="600839">四川长虹(600839)</option>

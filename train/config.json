@@ -64,7 +64,7 @@
 				"type": "lstm",
 				"neurons": 100,
 				"input_timesteps": 29,
-				"input_dim": 14,
+				"input_dim": 15,
 				"return_seq": true
 			},
 			{

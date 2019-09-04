@@ -2,11 +2,14 @@ import sys
 import os
 import math
 import getopt
-
 import arrow
+import numpy as np
+import pandas as pd
 import keras
 from keras.utils import plot_model
 from keras.models import load_model
+import matplotlib.pyplot as plt
+from datetime import datetime,timedelta
 
 from train.vendor import ztools as zt
 from train.vendor import zai_keras as zks
@@ -16,7 +19,7 @@ from train.quant import model as my_model
 from train import global_obj as my_global
 from train.utils import tools as my_tools
 
-from LSTMPredictStock.core.data_processor import DataLoader
+from train.quant.data_processor import DataLoader
 
 ################################################################################
 
@@ -204,6 +207,7 @@ def prepared(params):
 
     return type, code, datafile, modfile
 
+# TODO(atoml.com): 训练入口
 def train(params):
     type, code, datafile, modfile = prepared(params)
 
@@ -216,7 +220,7 @@ def train(params):
         split = 1  # 若不评估模型准确度，则将全部历史数据用于训练
 
     # 从本地加载训练和测试数据
-    data = DataLoader(datafile, split, my_global.g.config['data']['ohlc'] + my_global.g.config['data']['profit'])
+    data = DataLoader(datafile, split, my_global.g.config['data']['ohlcv'] + my_global.g.config['data']['profit'])
 
     # 训练模型：
     # out-of memory generative training
@@ -242,9 +246,117 @@ def train(params):
             normalise=my_global.g.config['data']['normalise']
         )
 
-        predictions = model.predict_sequences_multiple(x_test, my_global.g.config['data']['sequence_length'],
+        predictions = m.predict_sequences_multiple(x_test, my_global.g.config['data']['sequence_length'],
                                                        my_global.g.config['data']['sequence_length'])
         print("训练：\n", predictions)
+
+def plot_results(predicted_data, true_data):  # predicted_data与true_data：同长度一维数组
+    fig = plt.figure(facecolor='white')
+    ax = fig.add_subplot(111)
+    ax.plot(true_data, label='True Data')
+    plt.plot(predicted_data, label='Prediction')
+    plt.legend()
+    plt.show()
+
+
+# TODO(atoml.com): 预测入口
+# 对指定公司的股票进行预测
+def prediction(params):
+    type, code, datafile, modfile = prepared(params)
+
+    '''
+    使用保存的模型，对输入数据进行预测
+    '''
+    data = DataLoader(
+        datafile,  # configs['data']['filename']
+        my_global.g.config['data']['train_test_split'],
+        my_global.g.config['data']['ohlcv'] + my_global.g.config['data']['profit']
+    )
+
+    file_path = modfile
+    m = my_model.Model()
+    keras.backend.clear_session()
+    m.load_model(file_path)  # 根据配置文件新建模型
+
+    pre_len = 30
+    real = False
+    # predict_length = configs['data']['sequence_length']   # 预测长度
+    predict_length = pre_len
+    if real:  # 用最近一个窗口的数据进行预测，没有对比数据
+        win_position = -1
+    else:  # 用指定位置的一个窗口数据进行预测，有对比真实数据（用于绘图对比）
+        win_position = -my_global.g.config['data']['sequence_length']
+
+    x_test, y_test = data.get_test_data(
+        seq_len=my_global.g.config['data']['sequence_length'],
+        normalise=False
+    )
+
+    x_test = x_test[win_position]
+    x_test = x_test[np.newaxis, :, :]
+    if not real:
+        y_test_real = y_test[win_position:win_position + predict_length]
+
+    base = x_test[0][0][0]
+    print("base value:\n", base)
+
+    x_test, y_test = data.get_test_data(
+        seq_len=my_global.g.config['data']['sequence_length'],
+        normalise=my_global.g.config['data']['normalise']
+    )
+    x_test = x_test[win_position]
+    x_test = x_test[np.newaxis, :, :]
+
+    # predictions = model.predict_sequences_multiple(x_test, configs['data']['sequence_length'],
+    #                                                predict_length)
+
+    predictions = m.predict_1_win_sequence(x_test, my_global.g.config['data']['sequence_length'], predict_length)
+    # 反归一化
+    predictions_array = np.array(predictions)
+    predictions_array = base * (1 + predictions_array)
+    predictions = predictions_array.tolist()
+
+    print("预测数据:\n", predictions)
+    if not real:
+        print("真实数据：\n", y_test_real)
+
+    plot = False
+    # plot_results_multiple(predictions, y_test, predict_length)
+    if plot:
+        if real:
+            plot_results(predictions, [])
+        else:
+            plot_results(predictions, y_test_real)
+
+    return format_predictions(predictions)
+
+def format_predictions(predictions):    # 给预测数据添加对应日期
+    date_predict = []
+    cur = datetime.now()
+    cur += timedelta(days=1)
+    counter = 0
+
+    while counter < len(predictions):
+        if cur.isoweekday()  == 6:
+            cur = cur + timedelta(days=2)
+        if cur.isoweekday()  == 7:
+            cur = cur + timedelta(days=1)
+        date_predict.append([cur.strftime("%Y-%m-%d"),predictions[counter]])
+        cur = cur + timedelta(days=1)
+        counter += 1
+
+    return date_predict
+
+# TODO(atoml.com): 获取历史数据
+# 二维数组：[[data,value],[...]]
+def get_hist_data(code, recent_day=30):  # 获取某股票，指定天数的历史close数据,包含日期
+    _, datafile = my_do.download_from_code(code, '2007-01-01')
+
+    cols = ['date', 'close']
+    data_frame = pd.read_csv(datafile)
+    data_frame = data_frame.sort_values('date')  # 日期排序
+    close_data = data_frame.get(cols).values[-recent_day:]
+    return close_data.tolist()
 
 def modeling(params):
     type, code, datafile, modfile = prepared(params)
@@ -278,7 +390,8 @@ def main(argv):
             # modeling(value)
             train(value)
         if name in ("-p", "--predict"):
-            predict(value)
+            # predict(value)
+            prediction(value)
 
 if __name__ == '__main__':
     main(sys.argv[1:])

@@ -12,7 +12,8 @@ from predict import models
 from .models import Company
 from LSTMPredictStock import run
 
-from train.utils import params as my_params
+from train import global_obj as my_global
+from train.quant import modeling as my_mo
 
 LOCAL = False
 
@@ -89,9 +90,9 @@ def get_stock_index(stock_code):
     return list(indexs)
 
 def home(request):
-    recent_data, predict_data = get_hist_predict_data("600718")
-    data = {"recent_data":recent_data,"stock_code":"600718","predict_data":predict_data}
-    data['indexs'] = get_stock_index("600718")
+    recent_data, predict_data = get_hist_predict_data("300096")
+    data = {"recent_data":recent_data,"stock_code":"300096","predict_data":predict_data}
+    # data['indexs'] = get_stock_index("300096")
     return render(request,"predict/home.html",{"data":json.dumps(data)}) # json.dumps(list)
 
 def predict_stock_action(request):
@@ -100,7 +101,7 @@ def predict_stock_action(request):
 
     recent_data, predict_data = get_hist_predict_data(stock_code)
     data = {"recent_data": recent_data, "stock_code": stock_code, "predict_data": predict_data}
-    data['indexs'] = get_stock_index(stock_code)
+    # data['indexs'] = get_stock_index(stock_code)
     return render(request, "predict/home.html", {"data": json.dumps(data)})  # json.dumps(list)
 
 def index(request):
@@ -110,18 +111,31 @@ def index(request):
 
     my_global.g.log.info("request stock_code: " + stock_code)
 
-    return HttpResponse(u"欢迎光临")
+    company = get_object_or_404(Company, stock_code=stock_code)
+    history_data = models.HistoryData()
+    history_data.company = company
+    history_data.set_data(my_mo.get_hist_data(code=stock_code, recent_day=20))
+    history_data.save()
+    recent_data = history_data.get_data()
+    predict_data = models.PredictData()
+    predict_data.company = company
+    predict_data.set_data(my_mo.prediction(stock_code))
+    predict_data.save()
+    predict_data = predict_data.get_data()
+    data = {"recent_data": recent_data, "stock_code": stock_code, "predict_data": predict_data}
+    # recent_data, predict_data = get_hist_predict_data(stock_code)
+    # data = {"recent_data": recent_data, "stock_code": stock_code, "predict_data": predict_data}
+    # data['indexs'] = get_stock_index(stock_code)
+    return render(request, "predict/home.html", {"data": json.dumps(data)})  # json.dumps(list)
 
 def init_db():
-    data_frame = pd.read_csv(my_params.default_initcode_filename, index_col=False, encoding='gbk')
+    initcode_file = os.path.join(my_global.g.data_path, my_global.default_initcode_filename)
+    data_frame = pd.read_csv(initcode_file, index_col=False, encoding='gbk')
     for index, row in data_frame.iterrows():
         Company.objects.create(name=row['name'], stock_code=row['code'])
         print(row['code'], ':', row['name'])
 
 def init(request):
     init_db()
-
-    # p = Company(name = "索菲亚", stock_code = 002572)
-    # p.save()
 
     return HttpResponse(u"初始化")

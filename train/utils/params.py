@@ -14,7 +14,6 @@ app_name = 'qas'
 default_datapath = './data/'
 default_logpath = default_datapath + 'logs/'
 default_pid = default_datapath + app_name + '.pid'
-default_initcode_filename = default_datapath + 'init_code.csv'
 
 default_configfile = './config.ini'
 default_section_setting = 'setting'
