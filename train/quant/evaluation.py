@@ -4,7 +4,6 @@ import numpy as np
 from train.vendor import ztools as zt
 from train.vendor import ztools_data as zdat
 from train.vendor import ztools_tq as ztq
-from train.utils import params as p
 
 class evaluation():
 

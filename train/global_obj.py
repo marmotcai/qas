@@ -1,9 +1,14 @@
-version = 'Atom Quant Analysis System, Version: 0.0.1'
-app_name = 'qas'
+
+__author__ = "andrew cai"
+__copyright__ = "andrew cai 2019"
+__version__ = "1.1.0"
+__license__ = "MIT"
+__name__ = 'qas'
+__describe__ = 'Atom Quant Analysis System'
 
 default_datapath = './data/'
 default_logpath = default_datapath + 'logs/'
-default_pid = default_datapath + app_name + '.pid'
+default_pid = default_datapath + __name__ + '.pid'
 default_initcode_filename = 'init_code.csv'
 
 default_configfile = './config.json'
@@ -56,7 +61,7 @@ class Global:
         nowTime = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
         logFilename = self.config['general']['logfile']
         self.log_file = self.log_path + logFilename.replace("$TIME", nowTime)
-        self.log = my_logger.logger(self.log_file, app_name)
+        self.log = my_logger.logger(self.log_file, __name__)
 
         # init dir
         self.data_path = get_parent_dir() + self.config['data']['base']
@@ -76,11 +81,12 @@ class Global:
         pd.options.display.float_format = '{:.1f}'.format
 
         #
-        self.print_current_env_nformation()
+        # self.print_current_env_nformation()
 
     def print_current_env_nformation(self):
         print("-----------------------------")
-        print(version)
+        print(__describe__)
+        print(__version__)
         print("***********")
         print("log_file:    " + self.log_file)
         print("data_path:   " + self.data_path)

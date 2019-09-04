@@ -5,6 +5,8 @@ import getopt
 import arrow
 import numpy as np
 import pandas as pd
+
+import tensorflow as tf
 import keras
 from keras.utils import plot_model
 from keras.models import load_model
@@ -376,10 +378,16 @@ def predict(params):
 
 ################################################################################
 
+def test_gpu():
+    device_name = tf.test.gpu_device_name()
+    if device_name != '/device:GPU:0':
+        return 'GPU device not found'
+        # raise SystemError('GPU device not found')
+    return 'Found GPU at: {}'.format(device_name)
+
 def main(argv):
     try:
-        options, args = getopt.getopt(argv, "im:p:", ["initialize", "modeling=", "predict="])
-
+        options, args = getopt.getopt(argv, "im:p:t:", ["initialize", "modeling=", "predict=", "test="])
     except getopt.GetoptError:
         sys.exit()
 
@@ -392,6 +400,8 @@ def main(argv):
         if name in ("-p", "--predict"):
             # predict(value)
             prediction(value)
+        if name in ("-t", "--test"):
+            test_gpu()
 
 if __name__ == '__main__':
     main(sys.argv[1:])

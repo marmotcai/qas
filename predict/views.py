@@ -13,7 +13,7 @@ from .models import Company
 from LSTMPredictStock import run
 
 from train import global_obj as my_global
-from train.quant import modeling as my_mo
+from train.quant import manager as my_man
 
 LOCAL = False
 
@@ -114,12 +114,12 @@ def index(request):
     company = get_object_or_404(Company, stock_code=stock_code)
     history_data = models.HistoryData()
     history_data.company = company
-    history_data.set_data(my_mo.get_hist_data(code=stock_code, recent_day=20))
+    history_data.set_data(my_man.get_hist_data(code=stock_code, recent_day=20))
     history_data.save()
     recent_data = history_data.get_data()
     predict_data = models.PredictData()
     predict_data.company = company
-    predict_data.set_data(my_mo.prediction(stock_code))
+    predict_data.set_data(my_man.prediction(stock_code))
     predict_data.save()
     predict_data = predict_data.get_data()
     data = {"recent_data": recent_data, "stock_code": stock_code, "predict_data": predict_data}

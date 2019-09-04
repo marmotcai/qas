@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 
 import sys
 import time
@@ -8,44 +8,23 @@ import subprocess
 
 import schedule as sc
 
-import tensorflow as tf
+from train import global_obj as my_global
 
 from train.quant import dataobject as my_do
-from train.quant import modeling as my_mo
+from train.quant import manager as my_man
 
-from train.utils import params as my_params
 from train.utils import tools as my_tools
 from train.utils import update as my_update
 
 ################################################################################
 
-def test_gpu():
-    device_name = tf.test.gpu_device_name()
-    if device_name != '/device:GPU:0':
-        return 'GPU device not found'
-        # raise SystemError('GPU device not found')
-    return 'Found GPU at: {}'.format(device_name)
-
 def usage():
     print("-h --help,           Display this help and exit")
     print("-v --version,        Print version infomation")
-    print("-s --setting,        Set params (e.g: -s datapath=./data")
     print("-t --test,           Test mode (e.g:-t gpu)")
     print("-d --download,       Download data (e.g:-d inx=inx_code.csv)")
     print("-m --modeling,       Training data build model")
     print("-e --evaluation,     Evaluation model")
-
-def setting(setting):
-    if "=" in setting:
-        item, value = setting.split("=")
-    else:
-        return
-
-    if len(item) <= 0 or len(value) <= 0:
-        print("setting params error!")
-        return
-
-    my_params.global_obj.set_item_value(item, value)
 
 def loaddata(filename):
     data = my_do.train_data(filename)
@@ -57,7 +36,7 @@ def evaluation(params):
     if "|" in params:
         type, filepath = params.split("|")
     else:
-        type = my_params.default_model
+        type = my_global.g.default_model_type
         filepath = params
 
     if "," in filepath:
@@ -66,24 +45,24 @@ def evaluation(params):
         return
 
     if not my_tools.path_exists(mod_filepath):
-        mod_filepath = my_params.g_config.stk_path + mod_filepath
+        mod_filepath = my_global.g.stk_path + mod_filepath
     if not my_tools.path_exists(mod_filepath):
         print(mod_filepath + " is not exists")
         return
 
     if not my_tools.path_exists(data_filepath):
-        data_filepath = my_params.g_config.stk_path + data_filepath
+        data_filepath = my_global.g.stk_path + data_filepath
     if not my_tools.path_exists(data_filepath):
         print(data_filepath + " is not exists")
         return
 
-    model = my_mo.model(loaddata(data_filepath))
+    model = my_man.model(loaddata(data_filepath))
     model.modeling(type)
     model.eva(mod_filepath)
 
 def test(type):
     if type in ("gpu"):
-        print(my_tools.test_gpu())
+        print(my_man.test_gpu())
 
 class process(multiprocessing.Process):
     def __init__(self, cmd, args):
@@ -99,10 +78,8 @@ class process(multiprocessing.Process):
         subprocess.check_call(self.args)
 
 def loadconfig_and_run(filename):
-    my_params.g.config.load_config(filename)
-
-    for index in range(0, len(my_params.g.config.schedules)):
-        cmder = my_params.g.config.schedules[index]
+    for index in range(0, len(my_global.g.schedules)):
+        cmder = my_global.g.config.schedules[index]
         at = cmder.time.split(",")
         cmdstr = cmder.cmd.split(",")
 
@@ -145,27 +122,22 @@ def main(cmd, argv):
     for name, value in options:
         if name in ("-h", "--help"):
             usage()
-
         if name in ("-v", "--version"):
-            my_params.g.config.print_current_information()
-
+            my_global.g.print_current_env_nformation()
         if name in ("-u", "--update"):
             my_update.main(argv)
-
         if name in ("-i", "--initialize"):
-            my_mo.main(argv)
+            my_man.main(argv)
         if name in ("-l", "--load"):
             loadconfig_and_run(value)
-        if name in ("-s", "--setting"):
-            setting(value)
         if name in ("-t", "--test"):
-            test_gpu(value)
+            test(value)
         if name in ("-d", "--download"):
             my_do.main(argv)
         if name in ("-m", "--modeling"):
-            my_mo.main(argv)
+            my_man.main(argv)
         if name in ("-p", "--predict"):
-            my_mo.main(argv)
+            my_man.main(argv)
         if name in ("-e", "--evaluation"):
             evaluation(value)
 

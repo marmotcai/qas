@@ -56,5 +56,5 @@ CMD ["/usr/sbin/sshd", "-D"]
 # ENV PATH $PATH:$APP_PATH
 
 # COPY . .
-# CMD [ "python3", "./training.py", "-h" ]
+# CMD [ "python3", "./main.py", "-h" ]
 
