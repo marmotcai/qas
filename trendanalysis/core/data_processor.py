@@ -2,6 +2,7 @@
 import numpy as np
 import pandas as pd
 
+import trendanalysis as ta
 from trendanalysis.vendor import zsys
 from trendanalysis.vendor import ztools as zt
 from trendanalysis.vendor import zpd_talib as zta
@@ -29,7 +30,7 @@ class DataPrepared():
 
 	# 计算均值
 	def prepared_avg(df):
-		ohlc = my_global.g.config['data']['ohlc']
+		ohlc = ta.g.config['data']['ohlc']
 		df['ohlc_avg'] = df[ohlc].mean(axis=1).round(2)  # 当天OHLC均值
 		df['dprice_max'] = df['ohlc_avg'].rolling(10).max()
 		df['dprice_min'] = df['ohlc_avg'].rolling(10).min()

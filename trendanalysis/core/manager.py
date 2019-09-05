@@ -13,9 +13,11 @@ from keras.models import load_model
 import matplotlib.pyplot as plt
 from datetime import datetime,timedelta
 
+import trendanalysis as ta
+
 from trendanalysis.vendor import ztools as zt
 from trendanalysis.vendor import zai_keras as zks
-from trendanalysis.core import dataobject as my_do
+from trendanalysis.core import data_manager as my_dm
 from trendanalysis.core import evaluation as eva
 from trendanalysis.core import model as my_model
 from trendanalysis import global_obj as my_global
@@ -29,7 +31,7 @@ class model():
     def __init__(self, type, datafile):
         self.do = None
 
-        self.type = my_global.g.config['model']['type']
+        self.type = ta.g.config['model']['type']
         if len(type) > 0:
             self.type = type
 
@@ -37,7 +39,7 @@ class model():
             self.setdata(datafile)
 
     def setdata(self, filename = ""):
-        self.do = my_do.train_data(filename)
+        self.do = my_dm.train_data(filename)
 
     def setmod(self, filename):
         self.mx = load_model(filename)
@@ -57,19 +59,19 @@ class model():
         self.do.prepared(self.type, action='modeling') # 数据预处理
 
         # 分离训练和测试数据
-        self.df_train, self.df_test = my_do.util.split(self.do.df, 0.6)
+        self.df_train, self.df_test = my_dm.util.split(self.do.df, 0.6)
 
         # 构建训练特征数据
-        other_features_lst = my_global.g.config['data']['ohlcv'] + my_global.g.config['data']['profit'] # + xagv_lst + ma100_lst + other_lst
-        self.x_train = my_do.util.get_features(self.df_train, other_features_lst)
-        self.x_test = my_do.util.get_features(self.df_test, other_features_lst)
+        other_features_lst = ta.g.config['data']['ohlcv'] + ta.g.config['data']['profit'] # + xagv_lst + ma100_lst + other_lst
+        self.x_train = my_dm.util.get_features(self.df_train, other_features_lst)
+        self.x_test = my_dm.util.get_features(self.df_test, other_features_lst)
 
         #############################################################################################################
 
         # 构建特征，也就是结果值Y
         if self.type == 'rate':
-            self.y_train = my_do.util.prepared_y(self.df_train, 'next_rate_10_type', 'onehot')
-            self.y_test = my_do.util.prepared_y(self.df_test, 'next_rate_10_type', 'onehot')
+            self.y_train = my_dm.util.prepared_y(self.df_train, 'next_rate_10_type', 'onehot')
+            self.y_test = my_dm.util.prepared_y(self.df_test, 'next_rate_10_type', 'onehot')
 
             y_lst = self.y_train[0]
             x_lst = other_features_lst
@@ -77,8 +79,8 @@ class model():
             num_in, num_out = len(x_lst), len(y_lst)
 
         if self.type == 'price':
-            self.y_train = my_do.util.prepared_y(self.df_train, 'next_profit_10')
-            self.y_test = my_do.util.prepared_y(self.df_test, 'next_profit_10')
+            self.y_train = my_dm.util.prepared_y(self.df_train, 'next_profit_10')
+            self.y_test = my_dm.util.prepared_y(self.df_test, 'next_profit_10')
 
             y_lst = 1
             x_lst = other_features_lst
@@ -104,10 +106,10 @@ class model():
             mx = self.setmod(model_filename)
 
         mx.summary()
-        plot_model(mx, to_file = my_global.g.log_path + 'model.png')
+        plot_model(mx, to_file = ta.g.log_path + 'model.png')
 
         print('\n#4 模型训练 fit')
-        tbCallBack = keras.callbacks.TensorBoard(log_dir = my_global.g.log_path, write_graph = True, write_images=True)
+        tbCallBack = keras.callbacks.TensorBoard(log_dir = ta.g.log_path, write_graph = True, write_images=True)
         tn0 = arrow.now()
         mx.fit(self.x_train, self.y_train, epochs = 500, batch_size = 512, callbacks = [tbCallBack])
         tn = zt.timNSec('', tn0, True)
@@ -121,7 +123,7 @@ class model():
             model = self.setmod(mod_filename)
         eva_obj = eva.evaluation(self.do)
 
-        x_test = my_do.util.get_features(self.do.df, my_global.g.config['data']['ohlcv'] + my_global.g.config['data']['profit'])
+        x_test = my_dm.util.get_features(self.do.df, ta.g.config['data']['ohlcv'] + ta.g.config['data']['profit'])
         eva_obj.predict(model, self.do.df, x_test)
 
     def predict(self, mod_filename):
@@ -133,8 +135,8 @@ class model():
 
         self.do.prepared(self.type, action='predict') # 数据预处理
 
-        other_features_lst = my_global.g.config['data']['ohlcv'] + my_global.g.config['data']['profit'] # + xagv_lst + ma100_lst + other_lst
-        x_df = my_do.util.get_features(self.do.df.tail(5), other_features_lst)
+        other_features_lst = ta.g.config['data']['ohlcv'] + ta.g.config['data']['profit'] # + xagv_lst + ma100_lst + other_lst
+        x_df = my_dm.util.get_features(self.do.df.tail(5), other_features_lst)
 
         txn = x_df.shape[0]
         x_lst = other_features_lst
@@ -149,9 +151,18 @@ class model():
 
 ################################################################################
 
-def initialize(type = "all"):
-    if type == "all":
-        my_do.download_all()
+def init_db():
+    initcode_file = os.path.join(ta.g.data_path, my_global.default_initcode_filename)
+    data_frame = pd.read_csv(initcode_file, index_col=False, encoding='gbk')
+    for index, row in data_frame.iterrows():
+        # Company.objects.create(name=row['name'], stock_code=row['code'])
+        print(row['code'], ':', row['name'])
+
+def initialize(params):
+    if "initdb" == params.lower():
+        init_db()
+    if "downall" == params.lower():
+        my_dm.download_all()
 
 def prepared(params):
     param_lst = []
@@ -193,7 +204,7 @@ def prepared(params):
     type, code, datafile, modfile = get_param(param_lst)
 
     if len(code) > 0 and len(datafile) <= 0: # 有代码没数据文件则先下载
-        _, datafile = my_do.download_from_code(code, '2007-01-01')
+        _, datafile = my_dm.download_from_code(code, '2007-01-01')
 
     if len(datafile) > 0:
         if not my_tools.path_exists(datafile):
@@ -205,7 +216,7 @@ def prepared(params):
     if len(code) <= 0 and len(datafile) > 0:
         code, _ = my_tools.get_code_from_filename(datafile)
     if len(modfile) <= 0 and len(code) > 0:
-        modfile = my_global.g.mod_path + code + ".h5"
+        modfile = ta.g.mod_path + code + ".h5"
 
     return type, code, datafile, modfile
 
@@ -214,42 +225,42 @@ def train(params):
     type, code, datafile, modfile = prepared(params)
 
     m = my_model.Model()
-    m.build_model(my_global.g.config)  # 根据配置文件新建模型
+    m.build_model(ta.g.config)  # 根据配置文件新建模型
 
     predict = True
-    split = my_global.g.config['data']['train_test_split']
+    split = ta.g.config['data']['train_test_split']
     if not predict:
         split = 1  # 若不评估模型准确度，则将全部历史数据用于训练
 
     # 从本地加载训练和测试数据
-    data = DataLoader(datafile, split, my_global.g.config['data']['ohlcv'] + my_global.g.config['data']['profit'])
+    data = DataLoader(datafile, split, ta.g.config['data']['ohlcv'] + ta.g.config['data']['profit'])
 
     # 训练模型：
     # out-of memory generative training
     steps_per_epoch = math.ceil(
-        (data.len_train - my_global.g.config['data']['sequence_length']) / my_global.g.config['training']['batch_size'])
+        (data.len_train - ta.g.config['data']['sequence_length']) / ta.g.config['training']['batch_size'])
     m.train_generator(
         data_gen=data.generate_train_batch(
-            seq_len=my_global.g.config['data']['sequence_length'],
-            batch_size=my_global.g.config['training']['batch_size'],
-            normalise=my_global.g.config['data']['normalise']
+            seq_len=ta.g.config['data']['sequence_length'],
+            batch_size=ta.g.config['training']['batch_size'],
+            normalise=ta.g.config['data']['normalise']
         ),
-        epochs=my_global.g.config['training']['epochs'],
-        batch_size=my_global.g.config['training']['batch_size'],
+        epochs=ta.g.config['training']['epochs'],
+        batch_size=ta.g.config['training']['batch_size'],
         steps_per_epoch=steps_per_epoch,
-        save_dir=my_global.g.mod_path,
+        save_dir=ta.g.mod_path,
         save_name=code
     )
 
     # 预测
     if predict:
         x_test, y_test = data.get_test_data(
-            seq_len=my_global.g.config['data']['sequence_length'],
-            normalise=my_global.g.config['data']['normalise']
+            seq_len=ta.g.config['data']['sequence_length'],
+            normalise=ta.g.config['data']['normalise']
         )
 
-        predictions = m.predict_sequences_multiple(x_test, my_global.g.config['data']['sequence_length'],
-                                                       my_global.g.config['data']['sequence_length'])
+        predictions = m.predict_sequences_multiple(x_test, ta.g.config['data']['sequence_length'],
+                                                       ta.g.config['data']['sequence_length'])
         print("训练：\n", predictions)
 
 def plot_results(predicted_data, true_data):  # predicted_data与true_data：同长度一维数组
@@ -271,8 +282,8 @@ def prediction(params):
     '''
     data = DataLoader(
         datafile,  # configs['data']['filename']
-        my_global.g.config['data']['train_test_split'],
-        my_global.g.config['data']['ohlcv'] + my_global.g.config['data']['profit']
+        ta.g.config['data']['train_test_split'],
+        ta.g.config['data']['ohlcv'] + ta.g.config['data']['profit']
     )
 
     file_path = modfile
@@ -287,10 +298,10 @@ def prediction(params):
     if real:  # 用最近一个窗口的数据进行预测，没有对比数据
         win_position = -1
     else:  # 用指定位置的一个窗口数据进行预测，有对比真实数据（用于绘图对比）
-        win_position = -my_global.g.config['data']['sequence_length']
+        win_position = -ta.g.config['data']['sequence_length']
 
     x_test, y_test = data.get_test_data(
-        seq_len=my_global.g.config['data']['sequence_length'],
+        seq_len=ta.g.config['data']['sequence_length'],
         normalise=False
     )
 
@@ -303,8 +314,8 @@ def prediction(params):
     print("base value:\n", base)
 
     x_test, y_test = data.get_test_data(
-        seq_len=my_global.g.config['data']['sequence_length'],
-        normalise=my_global.g.config['data']['normalise']
+        seq_len=ta.g.config['data']['sequence_length'],
+        normalise=ta.g.config['data']['normalise']
     )
     x_test = x_test[win_position]
     x_test = x_test[np.newaxis, :, :]
@@ -312,7 +323,7 @@ def prediction(params):
     # predictions = model.predict_sequences_multiple(x_test, configs['data']['sequence_length'],
     #                                                predict_length)
 
-    predictions = m.predict_1_win_sequence(x_test, my_global.g.config['data']['sequence_length'], predict_length)
+    predictions = m.predict_1_win_sequence(x_test, ta.g.config['data']['sequence_length'], predict_length)
     # 反归一化
     predictions_array = np.array(predictions)
     predictions_array = base * (1 + predictions_array)
@@ -352,7 +363,7 @@ def format_predictions(predictions):    # 给预测数据添加对应日期
 # TODO(atoml.com): 获取历史数据
 # 二维数组：[[data,value],[...]]
 def get_hist_data(code, recent_day=30):  # 获取某股票，指定天数的历史close数据,包含日期
-    _, datafile = my_do.download_from_code(code, '2007-01-01')
+    _, datafile = my_dm.download_from_code(code, '2007-01-01')
 
     cols = ['date', 'close']
     data_frame = pd.read_csv(datafile)
@@ -387,13 +398,13 @@ def test_gpu():
 
 def main(argv):
     try:
-        options, args = getopt.getopt(argv, "im:p:t:", ["initialize", "modeling=", "predict=", "test="])
+        options, args = getopt.getopt(argv, "i:m:p:t:", ["initialize", "modeling=", "predict=", "test="])
     except getopt.GetoptError:
         sys.exit()
 
     for name, value in options:
         if name in ("-i", "--initialize"):
-            initialize("all")
+            initialize(value)
         if name in ("-m", "--modeling"):
             # modeling(value)
             train(value)

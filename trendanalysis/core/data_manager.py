@@ -28,10 +28,9 @@ class download():
     def download_all(self, tim0 = '1994-01-01'):
         ta.g.log.info("download all data from " + tim0)
 
-        self.checkdir(ta.g.config.data_path)
-        dler.down_stk_base(ta.g.config.data_path)
-        dler.down_stk_pool(ta.g.config.stk_path,
-                           ta.g.config.data_path + ta.g.config['data']['stk_base_filename'], xtyp = 'D')
+        self.checkdir(ta.g.data_path)
+        dler.down_stk_base(ta.g.data_path)
+        dler.down_stk_pool(ta.g.stk_path, ta.g.data_path + ta.g.config['data']['stk_base_filename'], xtyp = 'D')
 
     def download_code(self, downpath, code, tim0):
         filename = downpath + code + '.csv'
@@ -89,7 +88,7 @@ def download_from_inxfile(filepath):
         return
 
     if not my_tools.path_exists(filename):
-        filename = ta.g.config.data_path + filename
+        filename = ta.g.data_path + filename
     if not my_tools.path_exists(filename):
         ta.g.log.error(filename + " is not exists")
         return
@@ -98,7 +97,7 @@ def download_from_inxfile(filepath):
     if type == "inx":
         down_obj.download_inx(ta.g.config.inx_path, filename)
     if type == "stk":
-        down_obj.downlaod_stk(ta.g.config.stk_path, filename)
+        down_obj.downlaod_stk(ta.g.stk_path, filename)
 
 def download_from_code(code, tim0 = '2007-01-01'):
     down_obj = download()
@@ -112,7 +111,7 @@ def main(argv):
 
     for name, value in options:
         if name in ("-d", "--download"):
-            if value == "init":
+            if value == "all":
                 download_all()
             if my_tools.isint(value):
                 download_from_code(value)

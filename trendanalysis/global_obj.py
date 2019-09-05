@@ -42,37 +42,36 @@ class Global:
             self.time = time
 
     def get_config_path(self):  # config.json的绝对路径
-        root_dir = self.get_parent_dir()
-        return os.path.join(root_dir, "config.json")
-
-    def get_data_path(self):  # data目录的绝对路径
-        root_dir = self.get_parent_dir()
-        return os.path.join(root_dir, "data")
+        return os.path.join(self.get_cur_dir(), "config.json")
 
     def get_parent_dir(self):  # 当前文件的父目录绝对路径
         return os.path.dirname(__file__)
 
+    def get_cur_dir(self):
+        return os.path.abspath(os.curdir)
+
     def __init__(self):
+        # init config obj
         self.config = json.load(open(self.get_config_path(), 'r'))
 
-        # init log obj
-        self.log_path = self.config['general']['logpath']
-        nowTime = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
-        logFilename = self.config['general']['logfile']
-        self.log_file = self.log_path + logFilename.replace("$TIME", nowTime)
-        self.log = my_logger.logger(self.log_file, __name__)
-
-        # init dir
-        self.data_path = self.get_parent_dir() + self.config['data']['base']
+        # init data dir
+        self.data_path = os.path.join(self.get_cur_dir(), self.config['data']['base'])
         my_tools.mkdir(self.data_path)
-        self.mod_path = self.data_path + self.config['data']['mod']
+        self.mod_path = os.path.join(self.data_path, self.config['data']['mod'])
         my_tools.mkdir(self.mod_path)
-        self.stk_path = self.data_path + self.config['data']['stk']
+        self.stk_path = os.path.join(self.data_path, self.config['data']['stk'])
         my_tools.mkdir(self.stk_path)
-        self.inx_path = self.data_path + self.config['data']['inx']
+        self.inx_path = os.path.join(self.data_path, self.config['data']['inx'])
         my_tools.mkdir(self.inx_path)
 
-        #
+        # init log obj
+        self.log_path = os.path.join(self.get_cur_dir(), self.config['general']['logpath'])
+        my_tools.mkdir(self.log_path)
+        nowTime = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
+        self.log_file = os.path.join(self.log_path, self.config['general']['logfile'].replace("$TIME", nowTime))
+        self.log = my_logger.logger(self.log_file, __name__)
+
+        # init schedules
         self.schedules = self.config['general']['schedule']
 
         #

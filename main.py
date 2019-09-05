@@ -11,7 +11,7 @@ import schedule as sc
 import update
 import trendanalysis as ta
 from trendanalysis.core import manager as g_man
-from trendanalysis.core import dataobject as g_do
+from trendanalysis.core import data_manager as g_dm
 
 ################################################################################
 
@@ -24,7 +24,7 @@ def usage():
     print("-e --evaluation,     Evaluation model")
 
 def loaddata(filename):
-    data = g_do.train_data(filename)
+    data = g_dm.train_data(filename)
     print(data.df.tail(10))
     return data
 
@@ -130,7 +130,7 @@ def main(cmd, argv):
         if name in ("-t", "--test"):
             test(value)
         if name in ("-d", "--download"):
-            g_do.main(argv)
+            g_dm.main(argv)
         if name in ("-m", "--modeling"):
             g_man.main(argv)
         if name in ("-p", "--predict"):
