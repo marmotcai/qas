@@ -35,26 +35,25 @@ import pandas as pd
 from trendanalysis.utils import tools as my_tools
 from trendanalysis.utils import logger as my_logger
 
-
-def get_config_path():  # config.json的绝对路径
-    root_dir = get_parent_dir()
-    return os.path.join(root_dir, "config.json")
-
-def get_data_path():  # data目录的绝对路径
-    root_dir = get_parent_dir()
-    return os.path.join(root_dir, "data")
-
-def get_parent_dir():   # 当前文件的父目录绝对路径
-    return os.path.dirname(__file__)
-
 class Global:
     class cmdobj:
         def __init__(self, cmd, time):
             self.cmd = cmd
             self.time = time
 
+    def get_config_path(self):  # config.json的绝对路径
+        root_dir = self.get_parent_dir()
+        return os.path.join(root_dir, "config.json")
+
+    def get_data_path(self):  # data目录的绝对路径
+        root_dir = self.get_parent_dir()
+        return os.path.join(root_dir, "data")
+
+    def get_parent_dir(self):  # 当前文件的父目录绝对路径
+        return os.path.dirname(__file__)
+
     def __init__(self):
-        self.config = json.load(open(get_config_path(), 'r'))
+        self.config = json.load(open(self.get_config_path(), 'r'))
 
         # init log obj
         self.log_path = self.config['general']['logpath']
@@ -64,7 +63,7 @@ class Global:
         self.log = my_logger.logger(self.log_file, __name__)
 
         # init dir
-        self.data_path = get_parent_dir() + self.config['data']['base']
+        self.data_path = self.get_parent_dir() + self.config['data']['base']
         my_tools.mkdir(self.data_path)
         self.mod_path = self.data_path + self.config['data']['mod']
         my_tools.mkdir(self.mod_path)

@@ -8,6 +8,7 @@ import subprocess
 
 import schedule as sc
 
+import update
 import trendanalysis as ta
 from trendanalysis.core import manager as g_man
 from trendanalysis.core import dataobject as g_do
@@ -121,7 +122,7 @@ def main(cmd, argv):
         if name in ("-v", "--version"):
             ta.g.print_current_env_nformation()
         if name in ("-u", "--update"):
-            ta.g_update.main(argv)
+            update.main(argv)
         if name in ("-i", "--initialize"):
             g_man.main(argv)
         if name in ("-l", "--load"):

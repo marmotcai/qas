@@ -1,5 +1,6 @@
 
 import sys
+import os
 import getopt
 from git import Repo
 import trendanalysis as ta
@@ -14,7 +15,7 @@ def update(githuburl):
 
     ta.g.log.info("start git pull..")
 
-    repo = Repo(default_gitdir)
+    repo = Repo(os.path.dirname(__file__))
 
     # 获取master最新版本的hexsha值
     head = repo.head
