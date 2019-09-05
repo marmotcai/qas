@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
+printf $(uname)
+
 app_path=$PWD
 
-if [[ 'MINGW' =~ $uname ]]; then
+if [[ 'MINGW' =~ $(uname) ]]; then
   app_path="/"$app_path
 fi
 
@@ -19,5 +21,5 @@ fi
 
 printf "app path: "$app_path"\n"
 
-docker run -d -ti --name my-qas -v $app_path:/root/qas -p 9022:22 -p 8000:8000 marmotcai/qas
-winpty docker exec -it my-qas //bin/bash
+docker run -d -ti --name my-qas -v $app_path:/root/app -p 9022:22 -p 8000:8000 marmotcai/qas
+docker exec -it my-qas python /root/app/main.py -v
