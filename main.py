@@ -8,13 +8,9 @@ import subprocess
 
 import schedule as sc
 
-from trendanalysis import global_obj as my_global
-
-from trendanalysis.core import dataobject as my_do
-from trendanalysis.core import manager as my_man
-
-from trendanalysis.utils import tools as my_tools
-from trendanalysis.utils import update as my_update
+import trendanalysis as ta
+from trendanalysis.core import manager as g_man
+from trendanalysis.core import dataobject as g_do
 
 ################################################################################
 
@@ -27,7 +23,7 @@ def usage():
     print("-e --evaluation,     Evaluation model")
 
 def loaddata(filename):
-    data = my_do.train_data(filename)
+    data = g_do.train_data(filename)
     print(data.df.tail(10))
     return data
 
@@ -36,7 +32,7 @@ def evaluation(params):
     if "|" in params:
         type, filepath = params.split("|")
     else:
-        type = my_global.g.default_model_type
+        type = ta.g.default_model_type
         filepath = params
 
     if "," in filepath:
@@ -44,25 +40,25 @@ def evaluation(params):
     else:
         return
 
-    if not my_tools.path_exists(mod_filepath):
-        mod_filepath = my_global.g.stk_path + mod_filepath
-    if not my_tools.path_exists(mod_filepath):
+    if not ta.g_tools.path_exists(mod_filepath):
+        mod_filepath = ta.g.stk_path + mod_filepath
+    if not ta.g_tools.path_exists(mod_filepath):
         print(mod_filepath + " is not exists")
         return
 
-    if not my_tools.path_exists(data_filepath):
-        data_filepath = my_global.g.stk_path + data_filepath
-    if not my_tools.path_exists(data_filepath):
+    if not ta.g_tools.path_exists(data_filepath):
+        data_filepath = ta.g.stk_path + data_filepath
+    if not ta.g_tools.path_exists(data_filepath):
         print(data_filepath + " is not exists")
         return
 
-    model = my_man.model(loaddata(data_filepath))
+    model = g_man.model(loaddata(data_filepath))
     model.modeling(type)
     model.eva(mod_filepath)
 
 def test(type):
     if type in ("gpu"):
-        print(my_man.test_gpu())
+        print(g_man.test_gpu())
 
 class process(multiprocessing.Process):
     def __init__(self, cmd, args):
@@ -78,8 +74,8 @@ class process(multiprocessing.Process):
         subprocess.check_call(self.args)
 
 def loadconfig_and_run(filename):
-    for index in range(0, len(my_global.g.schedules)):
-        cmder = my_global.g.config.schedules[index]
+    for index in range(0, len(ta.g.schedules)):
+        cmder = ta.g.config.schedules[index]
         at = cmder.time.split(",")
         cmdstr = cmder.cmd.split(",")
 
@@ -123,21 +119,21 @@ def main(cmd, argv):
         if name in ("-h", "--help"):
             usage()
         if name in ("-v", "--version"):
-            my_global.g.print_current_env_nformation()
+            ta.g.print_current_env_nformation()
         if name in ("-u", "--update"):
-            my_update.main(argv)
+            ta.g_update.main(argv)
         if name in ("-i", "--initialize"):
-            my_man.main(argv)
+            g_man.main(argv)
         if name in ("-l", "--load"):
             loadconfig_and_run(value)
         if name in ("-t", "--test"):
             test(value)
         if name in ("-d", "--download"):
-            my_do.main(argv)
+            g_do.main(argv)
         if name in ("-m", "--modeling"):
-            my_man.main(argv)
+            g_man.main(argv)
         if name in ("-p", "--predict"):
-            my_man.main(argv)
+            g_man.main(argv)
         if name in ("-e", "--evaluation"):
             evaluation(value)
 

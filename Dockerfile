@@ -1,35 +1,7 @@
 FROM python:3 AS env
-
 MAINTAINER marmotcai "marmotcai@163.com"
 
-RUN pip install --upgrade pip
-
-ENV WORK_DIR=/root
-WORKDIR $WORK_DIR
-
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
-
 ########################################################
-
-FROM env AS server
-
-ENV APP_DIR=$WORK_DIR/app
-WORKDIR $APP_DIR
-
-COPY . $APP_DIR
-
-RUN pip install --no-cache-dir -r requirements.txt
-RUN python manage.py makemigrations
-RUN python manage.py migrate
-
-ENV PORT=3080
-RUN python manage.py manage.py runserver 0.0.0.0:$PORT
-EXPOSE $PORT
-
-########################################################
-
-FROM env AS ssh
 
 RUN sed -i '$a\alias ll=\"ls -alF\"' ~/.bashrc
 RUN sed -i '$a\alias la=\"ls -A\"' ~/.bashrc
@@ -48,9 +20,44 @@ RUN sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/g' /etc/ssh/
     echo "root:112233" | chpasswd && \
     mkdir /var/run/sshd
 
-EXPOSE 22
-
 CMD ["/usr/sbin/sshd", "-D"]
+
+########################################################
+
+RUN pip install --upgrade pip
+
+ENV WORK_DIR=/root
+WORKDIR $WORK_DIR
+
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+EXPOSE 22 8000
+
+########################################################
+
+FROM env AS runer
+
+ENV APP_DIR ${WORK_DIR}/app/
+CMD ["python", ${APP_DIR} + "manage.py", "runserver", "0.0.0.0:8000"]
+
+# FROM env AS server
+#
+# ENV APP_DIR=$WORK_DIR/app
+# WORKDIR $APP_DIR
+#
+# COPY . $APP_DIR
+#
+# RUN pip install --no-cache-dir -r requirements.txt
+# RUN python manage.py makemigrations
+# RUN python manage.py migrate
+#
+# ENV PORT=3080
+# RUN python manage.py manage.py runserver 0.0.0.0:$PORT
+# EXPOSE $PORT
+
+########################################################
+
 
 # ENV APP_PATH ${WORK_DIR}/app
 # ENV PATH $PATH:$APP_PATH

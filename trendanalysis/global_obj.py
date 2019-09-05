@@ -103,5 +103,3 @@ class Global:
             print(" at:      " + item['at'])
 
         print("-----------------------------")
-
-g = Global()

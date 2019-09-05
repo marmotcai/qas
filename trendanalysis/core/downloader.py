@@ -2,13 +2,13 @@ import os
 import tushare as ts
 import pandas as pd
 import numpy as np
-from trendanalysis import global_obj as my_global
+import trendanalysis as ta
 from trendanalysis.utils import tools as my_tools
 
-def down_stk_base(downpath = my_global.default_datapath,
-                  inxfile = my_global.default_stk_inx_filename,
-                  basefile = my_global.default_stk_base_filename,
-                  codefile = my_global.default_stk_code_filename):
+def down_stk_base(downpath = ta.global_obj.default_datapath,
+                  inxfile = ta.global_obj.default_stk_inx_filename,
+                  basefile = ta.global_obj.default_stk_base_filename,
+                  codefile = ta.global_obj.default_stk_code_filename):
     '''
     下载时基本参数数据时，有时会出现错误提升：
           timeout: timed out
@@ -57,11 +57,11 @@ def down_stk_base(downpath = my_global.default_datapath,
         dat.to_csv(fss, index = False, encoding = 'gbk', date_format = 'str');
     '''
 def get_stkDir(xtyp):
-    fgInx, xsub = False, my_global.config.stk_path
+    fgInx, xsub = False, ta.global_obj.config.stk_path
     if xtyp == 'index_cn': fgInx, xsub = True, 'inx/'
     elif xtyp == 'bond_cn': xsub = 'bond/'
     elif xtyp == 'etf_cn': xsub = 'etf/'
-    elif xtyp == 'stock_cn':xsub = my_global.config.stk_path
+    elif xtyp == 'stock_cn':xsub = ta.global_obj.config.stk_path
     else: xsub = ''
 
     return fgInx, xsub
@@ -83,7 +83,7 @@ def df_rdcsv_tim0(fss, ksgn, tim0):
             tim0 = s2.split(" ")[0]
     return xd0, tim0
 
-def df_xappend(df, df0, ksgn, num_round = 3, vlst = my_global.g.config['data']['dohlcv']):
+def df_xappend(df, df0, ksgn, num_round = 3, vlst = ta.g.config['data']['dohlcv']):
     if (len(df0) > 0):
         df2 = df0.append(df)
         df2 = df2.sort_values([ksgn], ascending = True);
@@ -122,7 +122,7 @@ def down_stk_code(rdat, xcod, xtyp = 'D', fgInx = False):
         if len(xd) > 0:
             # print(xdk)
 
-            xd = xdk[my_global.g.config['data']['dohlcv']]
+            xd = xdk[ta.g.config['data']['dohlcv']]
             xd = df_xappend(xd, xd0, 'date')
             #
             xd = xd.sort_values(['date'], ascending = False);
