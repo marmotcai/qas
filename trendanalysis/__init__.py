@@ -1,4 +1,4 @@
-from trendanalysis import global_obj as global_obj
+from trendanalysis import global_obj
 
 from trendanalysis.utils import tools as g_tools
 

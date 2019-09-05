@@ -50,9 +50,10 @@ class Global:
     def get_cur_dir(self):
         return os.path.abspath(os.curdir)
 
-    def __init__(self):
+    def __init__(self, config_file="config.json"):
         # init config obj
-        self.config = json.load(open(self.get_config_path(), 'r'))
+        self.config_file = os.path.join(self.get_cur_dir(), config_file)
+        self.config = json.load(open(self.config_file, 'r'))
 
         # init data dir
         self.data_path = os.path.join(self.get_cur_dir(), self.config['data']['base'])
