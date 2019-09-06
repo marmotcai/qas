@@ -4,7 +4,9 @@ django_compressor==2.3
 pytz==2019.2
 sqlparse==0.3.0
 tensorflow==1.14.0
+# tensorflow-gpu==1.14.0
 keras==2.2.4
+# keras-gpu==2.2.4
 pandas==0.25.0
 matplotlib==3.1.0
 plotly==4.0.0

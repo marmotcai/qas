@@ -18,6 +18,6 @@ COPY entrypoint.sh ./entrypoint.sh
 RUN chmod +x entrypoint.sh
 EXPOSE 22 8000
 
-# CMD ["/usr/sbin/sshd", "-D"]
+CMD ["/usr/sbin/sshd", "-D"]
 # CMD ["ls"]
 # CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
