@@ -13,7 +13,7 @@ from trendanalysis.vendor import ztools_datadown as zddown
 
 import trendanalysis as ta
 from trendanalysis.utils import tools as my_tools
-from trendanalysis.core import downloader as dler
+from trendanalysis.core import data_download as dd
 
 ################################################################################
 
@@ -29,8 +29,8 @@ class download():
         ta.g.log.info("download all data from " + tim0)
 
         self.checkdir(ta.g.data_path)
-        dler.down_stk_base(ta.g.data_path)
-        dler.down_stk_pool(ta.g.stk_path, ta.g.data_path + ta.g.config['data']['stk_base_filename'], xtyp = 'D')
+        dd.down_stk_base(ta.g.data_path)
+        dd.down_stk_pool(ta.g.stk_path, ta.g.data_path + ta.g.config['data']['stk_base_filename'], xtyp = 'D')
 
     def download_code(self, downpath, code, tim0):
         filename = downpath + code + '.csv'

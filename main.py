@@ -22,40 +22,6 @@ def usage():
     print("-m --modeling,       Training data build model")
     print("-e --evaluation,     Evaluation model")
 
-def loaddata(filename):
-    data = g_dm.train_data(filename)
-    print(data.df.tail(10))
-    return data
-
-def evaluation(params):
-    type = ""
-    if "|" in params:
-        type, filepath = params.split("|")
-    else:
-        type = ta.g.default_model_type
-        filepath = params
-
-    if "," in filepath:
-        mod_filepath, data_filepath = filepath.split(",")
-    else:
-        return
-
-    if not ta.g_tools.path_exists(mod_filepath):
-        mod_filepath = ta.g.stk_path + mod_filepath
-    if not ta.g_tools.path_exists(mod_filepath):
-        print(mod_filepath + " is not exists")
-        return
-
-    if not ta.g_tools.path_exists(data_filepath):
-        data_filepath = ta.g.stk_path + data_filepath
-    if not ta.g_tools.path_exists(data_filepath):
-        print(data_filepath + " is not exists")
-        return
-
-    model = g_man.model(loaddata(data_filepath))
-    model.modeling(type)
-    model.eva(mod_filepath)
-
 def test(type):
     if type in ("gpu"):
         print(g_man.test_gpu())

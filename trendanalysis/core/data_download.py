@@ -5,10 +5,10 @@ import numpy as np
 import trendanalysis as ta
 from trendanalysis.utils import tools as my_tools
 
-def down_stk_base(downpath = ta.global_obj.default_datapath,
-                  inxfile = ta.global_obj.default_stk_inx_filename,
-                  basefile = ta.global_obj.default_stk_base_filename,
-                  codefile = ta.global_obj.default_stk_code_filename):
+def down_stk_base(downpath = ta.g.data_path,
+                  inxfile = ta.g.config["data"]["stk_inx_filename"],
+                  basefile = ta.g.config["data"]["stk_base_filename"],
+                  codefile = ta.g.config["data"]["stk_code_filename"]):
     '''
     下载时基本参数数据时，有时会出现错误提升：
           timeout: timed out

@@ -1,6 +1,8 @@
 import arrow
 import numpy as np
 
+import trendanalysis as ta
+
 from trendanalysis.vendor import ztools as zt
 from trendanalysis.vendor import ztools_data as zdat
 from trendanalysis.vendor import ztools_tq as ztq
@@ -18,7 +20,7 @@ class evaluation():
         y_pred = np.argmax(y_pred0, axis = 1) + 1
         #
         df_x['y_pred'] = zdat.ds4x(y_pred, df_x.index, True)
-        df_x.to_csv(p.default_datapath + 'my.csv', index = False)
+        df_x.to_csv(ta.global_obj.g.data_path + 'my.csv', index = False)
         print('NaN的数量:', df_x.isnull().sum().sum())
 
         print('\n#6 acc准确度分析')

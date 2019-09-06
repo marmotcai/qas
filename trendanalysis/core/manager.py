@@ -152,7 +152,7 @@ class model():
 ################################################################################
 
 def init_db():
-    initcode_file = os.path.join(ta.g.data_path, my_global.default_initcode_filename)
+    initcode_file = os.path.join(ta.g.data_path, ta.g.config["general"]["initcodefile"])
     data_frame = pd.read_csv(initcode_file, index_col=False, encoding='gbk')
     for index, row in data_frame.iterrows():
         # Company.objects.create(name=row['name'], stock_code=row['code'])

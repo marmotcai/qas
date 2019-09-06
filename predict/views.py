@@ -11,7 +11,7 @@ from datetime import datetime as dt
 from predict import models
 from .models import Company
 
-from trendanalysis import global_obj as my_global
+import trendanalysis as ta
 from trendanalysis.core import manager as my_man
 
 LOCAL = False
@@ -96,7 +96,7 @@ def home(request):
 
 def predict_stock_action(request):
     stock_code = request.POST.get('stock_code', None)
-    my_global.g.log.info("request stock_code: " + stock_code)
+    ta.g.log.info("request stock_code: " + stock_code)
 
     recent_data, predict_data = get_hist_predict_data(stock_code)
     data = {"recent_data": recent_data, "stock_code": stock_code, "predict_data": predict_data}
@@ -108,7 +108,7 @@ def index(request):
     if (stock_code == None):
         return render(request, "predict/home.html")
 
-    my_global.g.log.info("request stock_code: " + stock_code)
+    ta.g.log.info("request stock_code: " + stock_code)
 
     company = get_object_or_404(Company, stock_code=stock_code)
     history_data = models.HistoryData()
@@ -128,7 +128,7 @@ def index(request):
     return render(request, "predict/home.html", {"data": json.dumps(data)})  # json.dumps(list)
 
 def init_db():
-    initcode_file = os.path.join(my_global.g.data_path, my_global.default_initcode_filename)
+    initcode_file = os.path.join(ta.g.data_path, ta.g.config["data"]["init_codefile"])
     data_frame = pd.read_csv(initcode_file, index_col=False, encoding='gbk')
     for index, row in data_frame.iterrows():
         Company.objects.create(name=row['name'], stock_code=row['code'])

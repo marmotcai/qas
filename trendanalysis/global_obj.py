@@ -6,27 +6,6 @@ __license__ = "MIT"
 __name__ = 'qas'
 __describe__ = 'Atom Quant Analysis System'
 
-default_datapath = './data/'
-default_logpath = default_datapath + 'logs/'
-default_pid = default_datapath + __name__ + '.pid'
-default_initcode_filename = 'init_code.csv'
-
-default_configfile = './config.json'
-default_section_setting = 'setting'
-default_section_schedule = 'schedule_'
-
-default_modpath = 'mod/'
-default_daypath = 'day/'
-default_stkpath = 'stk/'
-default_inxpath = 'inx/'
-
-default_inx_filename = 'my_inx_code.csv'
-default_stk_inx_filename = 'my_stk_inx.csv'
-default_stk_base_filename = 'my_stk_base.csv'
-default_stk_code_filename = 'my_stk_code.csv'
-
-default_model_type = 'rate'
-
 import json
 import os
 import datetime
@@ -71,6 +50,9 @@ class Global:
         nowTime = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
         self.log_file = os.path.join(self.log_path, self.config['general']['logfile'].replace("$TIME", nowTime))
         self.log = my_logger.logger(self.log_file, __name__)
+
+        # init pid
+        self.pid = self.data_path + __name__ + '.pid'
 
         # init schedules
         self.schedules = self.config['general']['schedule']

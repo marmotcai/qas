@@ -23,6 +23,8 @@
 		"mod": "./mod/",
 		"stk": "./stk/",
 		"inx": "./inx/",
+
+		"init_codefile": "init_code.csv",
 		"inx_filename": "my_inx_code.csv",
 		"stk_inx_filename": "my_stk_inx.csv",
 		"stk_base_filename": "my_stk_base.csv",
