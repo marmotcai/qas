@@ -1,6 +1,7 @@
 #!/bin/bash
 
 cmd=${1}
+app_path=${PWD}
 
 case $cmd in
     build)
@@ -10,7 +11,7 @@ case $cmd in
 
     test)
       printf "test mode\n"
-      docker run --rm -v $app_path:/root/app -p 9022:22 -p 8000:8000 marmotcai/qas /bin/bash
+      docker run --rm -ti -v $app_path:/root/app  -p 9022:22 -p 8000:8000 marmotcai/qas /bin/bash
       exit 0
     ;;
 
