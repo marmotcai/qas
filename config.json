@@ -5,8 +5,8 @@
 
 		"schedule": [
 			{
-				"cmd": "python,./train/training.py -i",
-				"at": "day,08:30"
+				"cmd": "python,./main.py -m ",
+				"at": "saturday,18:00"
 			},
 			{
 				"cmd": "python,./train/training.py -m 601988",
@@ -25,11 +25,10 @@
 		"inx": "./inx/",
 
 		"init_codefile": "init_code.csv",
-		"inx_filename": "my_inx_code.csv",
-		"stk_inx_filename": "my_stk_inx.csv",
-		"stk_base_filename": "my_stk_base.csv",
-		"stk_code_filename": "my_stk_code.csv",
-		"filename": "drjt_600718_stock.csv",
+		"inx_filename": "inx_code.csv",
+		"stk_inx_filename": "stk_inx.csv",
+		"stk_base_filename": "stk_base.csv",
+		"stk_code_filename": "stk_code.csv",
 		"ohlc": [
 			"open", "high", "low", "close"
 		],

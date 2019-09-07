@@ -1,16 +1,10 @@
 
-__author__ = "andrew cai"
-__copyright__ = "andrew cai 2019"
-__version__ = "1.1.0"
-__license__ = "MIT"
-__name__ = 'qas'
-__describe__ = 'Atom Quant Analysis System'
-
 import json
 import os
 import datetime
 import pandas as pd
 
+import trendanalysis as ta
 from trendanalysis.utils import tools as my_tools
 from trendanalysis.utils import logger as my_logger
 
@@ -52,7 +46,7 @@ class Global:
         self.log = my_logger.logger(self.log_file, __name__)
 
         # init pid
-        self.pid = self.data_path + __name__ + '.pid'
+        self.pid = self.data_path + ta.__name__ + '.pid'
 
         # init schedules
         self.schedules = self.config['general']['schedule']
@@ -66,8 +60,8 @@ class Global:
 
     def print_current_env_nformation(self):
         print("-----------------------------")
-        print(__describe__)
-        print(__version__)
+        print(ta.__describe__)
+        print(ta.__version__)
         print("***********")
         print("log_file:    " + self.log_file)
         print("data_path:   " + self.data_path)

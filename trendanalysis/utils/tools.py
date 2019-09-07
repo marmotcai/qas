@@ -2,6 +2,8 @@
 import os
 import time
 import datetime as dt
+import multiprocessing
+import subprocess
 
 def params_split(params, flag = ':'):
     return params.split(flag)
@@ -50,3 +52,16 @@ class Timer():
     def stop(self):
         end_dt = dt.datetime.now()
         print('Time taken: %s' % (end_dt - self.start_dt))
+
+class process(multiprocessing.Process):
+    def __init__(self, cmd, args):
+        multiprocessing.Process.__init__(self)
+        self.args = []
+        self.args.append(cmd)
+        for j in range(0, len(args)):
+            self.args.append(args[j])
+
+        print(self.args)
+
+    def run(self):
+        subprocess.check_call(self.args)

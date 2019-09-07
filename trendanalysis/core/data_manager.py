@@ -30,7 +30,8 @@ class download():
 
         self.checkdir(ta.g.data_path)
         dd.down_stk_base(ta.g.data_path)
-        dd.down_stk_pool(ta.g.stk_path, ta.g.data_path + ta.g.config['data']['stk_base_filename'], xtyp = 'D')
+        dd.down_stk_pool(ta.g.stk_path, ta.g.data_path + ta.g.config['data']['init_codefile'], xtyp='D')
+        # dd.down_stk_pool(ta.g.stk_path, ta.g.data_path + ta.g.config['data']['stk_base_filename'], xtyp = 'D')
 
     def download_code(self, downpath, code, tim0):
         filename = downpath + code + '.csv'
