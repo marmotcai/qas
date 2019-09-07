@@ -1,11 +1,16 @@
 #!/bin/bash
 
 cmd=${1}
+param=${2}
 app_path=${PWD}
 
 case $cmd in
     build)
-      docker build -t marmotcai/qas .
+      if [[ $param =~ 'git' ]]; then
+        docker build --build-arg APP_GITURL=$param -t marmotcai/qas .
+      else
+	docker build -t marmotcai/qas .
+      fi
       exit 0
     ;;
 
