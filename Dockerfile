@@ -1,23 +1,28 @@
 FROM marmotcai/pyrunner AS qas
 MAINTAINER marmotcai "marmotcai@163.com"
 
-ARG APP_GITURL="NULL"
+ARG APP_GITURL="null"
+ENV APP_PATH=${WORK_DIR}/app
+
 ENV PIP_ALIYUN_URL="https://mirrors.aliyun.com/pypi/simple"
 ENV PIP_TSINGHUA_URL="https://pypi.tuna.tsinghua.edu.cn/simple"
 
-WORKDIR ${WORK_DIR}
-COPY ./requirements.txt ./requirements.txt
 RUN pip install --upgrade pip
-RUN pip install  -i ${PIP_TSINGHUA_URL} --no-cache-dir -r ./requirements.txt
 
-ENV APP_PATH=${WORK_DIR}/app/
-RUN if [ "${APP_GITURL}" != "NULL" ] ; then echo ${APP_GITURL} ;  git clone ${APP_GITURL} ${APP_DIR} ; fi
+RUN mkdir -p ${APP_PATH}
+COPY requirements.txt ${APP_PATH}/requirements.txt
 
-WORKDIR $WORK_DIR
-COPY entrypoint.sh ./entrypoint.sh
+RUN if [ "${APP_GITURL}" != "null" ] ; then \
+      RUN echo ${APP_GITURL} ;  \
+      git clone ${APP_GITURL} ${APP_PATH}  ; \
+    fi
+
+RUN pip install  -i ${PIP_ALIYUN_URL} --no-cache-dir -r $APP_PATH/requirements.txt
+
+COPY entrypoint.sh $WORK_DIR/entrypoint.sh
 RUN chmod +x entrypoint.sh
+
 EXPOSE 22 8000
 
 CMD ["/usr/sbin/sshd", "-D"]
-# CMD ["ls"]
-# CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# CMD ["$WORK_DIR/entrypoint.sh"]
