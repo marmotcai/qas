@@ -51,6 +51,7 @@ class Global:
         # init schedules
         self.schedules = self.config['general']['schedule']
 
+        # os.system(sys._base_executable + " daemon_main.py thread")
         #
         pd.options.display.max_rows = int(self.config['pd']['max_rows'])
         pd.options.display.float_format = '{:.1f}'.format

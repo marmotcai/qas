@@ -16,6 +16,7 @@ class logger():
         self.logger.addHandler(self.handler)
 
     def debug(self, log):
+        print(log)
         self.logger.debug(log)
 
     def info(self, log):

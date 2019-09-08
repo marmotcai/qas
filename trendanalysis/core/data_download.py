@@ -5,10 +5,7 @@ import numpy as np
 import trendanalysis as ta
 from trendanalysis.utils import tools as my_tools
 
-def down_stk_base(downpath = ta.g.data_path,
-                  inxfile = ta.g.config["data"]["stk_inx_filename"],
-                  basefile = ta.g.config["data"]["stk_base_filename"],
-                  codefile = ta.g.config["data"]["stk_code_filename"]):
+def down_stk_base(downpath, inxfile, basefile, codefile):
     '''
     下载时基本参数数据时，有时会出现错误提升：
           timeout: timed out
@@ -83,7 +80,7 @@ def df_rdcsv_tim0(fss, ksgn, tim0):
             tim0 = s2.split(" ")[0]
     return xd0, tim0
 
-def df_xappend(df, df0, ksgn, num_round = 3, vlst = ta.g.config['data']['dohlcv']):
+def df_xappend(df, df0, ksgn, num_round, vlst):
     if (len(df0) > 0):
         df2 = df0.append(df)
         df2 = df2.sort_values([ksgn], ascending = True);
@@ -123,7 +120,7 @@ def down_stk_code(rdat, xcod, xtyp = 'D', fgInx = False):
             # print(xdk)
 
             xd = xdk[ta.g.config['data']['dohlcv']]
-            xd = df_xappend(xd, xd0, 'date')
+            xd = df_xappend(xd, xd0, 'date', 3, ta.g.config['data']['dohlcv'])
             #
             xd = xd.sort_values(['date'], ascending = False);
             xd.to_csv(fss, index=False, encoding = 'utf8')

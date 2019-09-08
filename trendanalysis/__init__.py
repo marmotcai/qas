@@ -1,5 +1,4 @@
-from trendanalysis import global_obj
-from trendanalysis.utils import tools as g_tools
+from trendanalysis.global_obj import Global
 
 __author__ = "andrew cai"
 __copyright__ = "andrew cai 2019"
@@ -8,5 +7,5 @@ __license__ = "MIT"
 __name__ = 'qas'
 __describe__ = 'Atom Quant Analysis System'
 
-g = global_obj.Global()
+g = Global()
 # g.print_current_env_nformation()

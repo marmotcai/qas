@@ -2,10 +2,11 @@ import os
 
 import sys
 import getopt
-import update
 import trendanalysis as ta
 from trendanalysis.core import manager as g_man
 from trendanalysis.core import data_manager as g_dm
+from trendanalysis.core.manager import DaemonThread
+import update
 
 ################################################################################
 

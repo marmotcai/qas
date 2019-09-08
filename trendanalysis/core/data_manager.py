@@ -29,7 +29,11 @@ class download():
         ta.g.log.info("download all data from " + tim0)
 
         self.checkdir(ta.g.data_path)
-        dd.down_stk_base(ta.g.data_path)
+        dd.down_stk_base(ta.g.data_path,
+                         ta.g.config["data"]["stk_inx_filename"],
+                         ta.g.config["data"]["stk_base_filename"],
+                         ta.g.config["data"]["stk_code_filename"])
+
         dd.down_stk_pool(ta.g.stk_path, ta.g.data_path + ta.g.config['data']['init_codefile'], xtyp='D')
         # dd.down_stk_pool(ta.g.stk_path, ta.g.data_path + ta.g.config['data']['stk_base_filename'], xtyp = 'D')
 

@@ -1,8 +1,10 @@
 import sys
 import os
 import math
+import time
 import getopt
 import arrow
+import threading
 import numpy as np
 import pandas as pd
 
@@ -11,8 +13,7 @@ import keras
 from keras.utils import plot_model
 from keras.models import load_model
 import matplotlib.pyplot as plt
-from datetime import datetime, timedelta, time
-from tushare.stock import cons as ct
+from datetime import datetime, timedelta
 
 import schedule
 from trendanalysis import global_obj
@@ -22,7 +23,6 @@ from trendanalysis.vendor import zai_keras as zks
 from trendanalysis.core import data_manager as my_dm
 from trendanalysis.core import evaluation as eva
 from trendanalysis.core import model as my_model
-from trendanalysis import global_obj as my_global
 from trendanalysis.utils import tools as my_tools
 from trendanalysis.core.data_processor import DataLoader
 
@@ -491,6 +491,28 @@ def loadconfig_and_run(filename):
     while True:
         schedule.run_pending()
         time.sleep(5)
+
+class DaemonThread:
+    __init = 1
+
+    def __init__(self):
+        self.__sem = threading.Semaphore(value = 1)#初始化信号量，最大并发数
+        ta.g.log.debug("Start daemon thread..")
+        return
+
+    def handle(self, params):
+        #开启线程，传入参数
+        _thread = threading.Thread(target = self.__run, args = (params,))
+        _thread.setDaemon(True)
+        _thread.start()#启动线程
+        return
+
+    def __run(self, params):
+        self.__sem.acquire()#信号量减1
+        ta.g.log.debug("load config and run : " + params)
+        loadconfig_and_run(params)
+        self.__sem.release()#信号量加1
+        return
 
 def evaluation(params):
     print(params)

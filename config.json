@@ -2,15 +2,15 @@
 	"general": {
         "logpath": "./data/log/",
 		"logfile": "$TIME.log",
-
+		"startschedule": "true",
 		"schedule": [
 			{
 				"cmd": "python,./main.py -m ",
 				"at": "saturday,18:00"
 			},
 			{
-				"cmd": "python,./train/training.py -m 601988",
-				"at": "day,19:00"
+				"cmd": "python,./main.py -m 601988",
+				"at": "day,15:15"
 			}
 		]
 	},
