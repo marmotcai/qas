@@ -5,20 +5,12 @@
 		"startschedule": "true",
 		"schedule": [
 			{
-				"cmd": "./main.py -m 601988",
-				"at": "saturday,18:00"
+				"cmd": "./main.py -m lst:init_code.csv",
+				"at": "monday,12:20"
 			},
 			{
 				"cmd": "python,./main.py -m 601988",
 				"at": "day,15:15"
-			},
-			{
-				"cmd": "python,./main.py -v",
-				"at": "seconds, 10"
-			},
-			{
-				"cmd": "python,./main.py -h",
-				"at": "seconds, 20"
 			}
 		]
 	},

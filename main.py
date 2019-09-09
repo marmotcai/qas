@@ -83,7 +83,7 @@ def main(cmd, argv):
         my_tools.process(cmd, argv).start()
         return
     try:
-        options, args = getopt.getopt(argv, "hvuis:t:d:m:p:e:", ["help", "version", "update", "initialize", "service=", "test=", "download=", "modeling=", "evaluation=", "predict="])
+        options, args = getopt.getopt(argv, "hvuiss:t:d:m:p:e:", ["help", "version", "update", "initialize", "service", "service=", "test=", "download=", "modeling=", "evaluation=", "predict="])
     except getopt.GetoptError:
         sys.exit()
 

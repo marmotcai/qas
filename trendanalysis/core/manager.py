@@ -3,7 +3,7 @@ import os
 import math
 import getopt
 import arrow
-import threading
+
 import numpy as np
 import pandas as pd
 
@@ -175,7 +175,7 @@ def init_db():
         print(row['code'], ':', row['name'])
 
 def initialize(params):
-    if "codefile" == params.lower():
+    if "initcodefile" == params.lower():
         init_initcodefile()
     if "db" == params.lower():
         init_db()
@@ -239,8 +239,8 @@ def prepared(params):
         if not my_tools.path_exists(lstfile):
             lstfile = os.path.join(ta.g.data_path, lstfile)
         if not my_tools.path_exists(lstfile):
-            ta.g.log.error("can't find data file: " + lstfile)
-            return
+            ta.g.log.error("can't find code file and init it : " + lstfile)
+            initialize("codefile")
     else:
         if len(datafile) > 0:
             if not my_tools.path_exists(datafile):
@@ -434,28 +434,6 @@ def predict(params):
     mo = model(type, datafile)
     y = mo.predict(modfile)
     print(y)
-
-class DaemonThread:
-    __init = 1
-
-    def __init__(self):
-        self.__sem = threading.Semaphore(value = 1) # 初始化信号量，最大并发数
-        ta.g.log.debug("Start daemon thread..")
-        return
-
-    def handle(self, params):
-        #开启线程，传入参数
-        _thread = threading.Thread(target = self.__run, args = (params,))
-        _thread.setDaemon(True)
-        _thread.start()#启动线程
-        return
-
-    def __run(self, params):
-        self.__sem.acquire()#信号量减1
-        ta.g.log.debug("load config and run : " + params)
-        service(params)
-        self.__sem.release()#信号量加1
-        return
 
 def evaluation(params):
     print(params)
