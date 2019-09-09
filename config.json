@@ -5,12 +5,20 @@
 		"startschedule": "true",
 		"schedule": [
 			{
-				"cmd": "python,./main.py -m ",
+				"cmd": "./main.py -m 601988",
 				"at": "saturday,18:00"
 			},
 			{
 				"cmd": "python,./main.py -m 601988",
 				"at": "day,15:15"
+			},
+			{
+				"cmd": "python,./main.py -v",
+				"at": "seconds, 10"
+			},
+			{
+				"cmd": "python,./main.py -h",
+				"at": "seconds, 20"
 			}
 		]
 	},

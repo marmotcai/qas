@@ -1,6 +1,7 @@
 import os
 import sys
 
+import main
 import trendanalysis as ta
 from trendanalysis.core import manager as g_man
 from trendanalysis.utils import daemon
@@ -8,11 +9,10 @@ from trendanalysis.utils import daemon
 class TDaemon(daemon.Daemon):
     def __init__(self, *args, **kwargs):
         super(TDaemon, self).__init__(*args, **kwargs)
-        ta.g.print_current_env_nformation()
-        ta.g.log.debug("start daemon..")
+        # ta.g.print_current_env_nformation()
 
     def run(self):
-        g_man.service()
+        main.service()
 
 def control_daemon(action):
     os.system(" ".join((sys.executable, __file__, action)))

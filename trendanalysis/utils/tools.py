@@ -2,9 +2,33 @@
 import os
 import sys
 import time
+import platform
 import datetime as dt
 import multiprocessing
 import subprocess
+import trendanalysis as ta
+
+def TestPlatform():
+    print ("--------------Operation System-----------------------")
+    #Windows will be : (32bit, WindowsPE)
+    #Linux will be : (32bit, ELF)
+    print(platform.architecture())
+
+    #Windows will be : Windows-XP-5.1.2600-SP3 or Windows-post2008Server-6.1.7600
+    #Linux will be : Linux-2.6.18-128.el5-i686-with-redhat-5.3-Final
+    print(platform.platform())
+
+    #Windows will be : Windows
+    #Linux will be : Linux
+    print(platform.system())
+
+    print ("--------------Python Version-------------------------")
+    #Windows and Linux will be : 3.1.1 or 3.1.3
+    print(platform.python_version())
+
+def UsePlatform():
+    sysstr = platform.system()
+    return sysstr
 
 def params_split(params, flag = ':'):
     return params.split(flag)
@@ -78,4 +102,6 @@ class process(multiprocessing.Process):
         print(self.args)
 
     def run(self):
+        ta.g.log.info("start process:")
+        ta.g.log.info(self.args)
         subprocess.check_call(self.args)

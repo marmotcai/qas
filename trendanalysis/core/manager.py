@@ -1,7 +1,6 @@
 import sys
 import os
 import math
-import time
 import getopt
 import arrow
 import threading
@@ -15,8 +14,6 @@ from keras.models import load_model
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 
-import schedule
-from trendanalysis import global_obj
 import trendanalysis as ta
 from trendanalysis.vendor import ztools as zt
 from trendanalysis.vendor import zai_keras as zks
@@ -438,67 +435,11 @@ def predict(params):
     y = mo.predict(modfile)
     print(y)
 
-def schedule_analysis(at, cmd, args):
-    if len(at) > 0 and at[0] in ("seconds"):
-        schedule.every(int(at[1])).seconds.do(main, cmd, args)
-
-    if len(at) > 0 and at[0] in ("minutes"):
-        schedule.every(int(at[1])).minutes.do(main, cmd, args)
-
-    if len(at) > 0 and at[0] in ("hour"):
-        schedule.every(int(at[1])).hour.do(main, cmd, args)
-
-    if len(at) > 0 and at[0] in ("day"):
-        schedule.every().day.at(at[1]).do(main, cmd, args)
-
-    ##############################################################
-
-    if len(at) > 0 and at[0] in ("monday"):
-        schedule.every().monday.at(at[1]).do(main, cmd, args)
-    if len(at) > 0 and at[0] in ("tuesday"):
-        schedule.every().tuesday.at(at[1]).do(main, cmd, args)
-    if len(at) > 0 and at[0] in ("wednesday"):
-        schedule.every().wednesday.at(at[1]).do(main, cmd, args)
-    if len(at) > 0 and at[0] in ("thursday"):
-        schedule.every().thursday.at(at[1]).do(main, cmd, args)
-    if len(at) > 0 and at[0] in ("friday"):
-        schedule.every().friday.at(at[1]).do(main, cmd, args)
-    if len(at) > 0 and at[0] in ("saturday"):
-        schedule.every().saturday.at(at[1]).do(main, cmd, args)
-    if len(at) > 0 and at[0] in ("sunday"):
-        schedule.every().sunday.at(at[1]).do(main, cmd, args)
-
-def service(filename = ""):
-    g = ta.g
-    if (len(filename) > 0):
-        g = global_obj.Global(filename)
-    for index in range(0, len(g.schedules)):
-        item = g.schedules[index]
-        at = item['at'].split(",")
-        cmdlst = item['cmd'].split(",")
-        if len(cmdlst) > 1:
-            cmd = cmdlst[0]
-            args = cmdlst[1]
-        else:
-            cmd = "python"
-            args = cmdlst
-
-        print('schedule', index, ":")
-        print(" at:      ", at)
-        print(" cmd:     ", cmd)
-        print(" args:    ", args)
-
-        schedule_analysis(at, cmd, args)
-
-    while True:
-        schedule.run_pending()
-        time.sleep(5)
-
 class DaemonThread:
     __init = 1
 
     def __init__(self):
-        self.__sem = threading.Semaphore(value = 1)#初始化信号量，最大并发数
+        self.__sem = threading.Semaphore(value = 1) # 初始化信号量，最大并发数
         ta.g.log.debug("Start daemon thread..")
         return
 

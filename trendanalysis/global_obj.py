@@ -41,7 +41,7 @@ class Global:
         # init log obj
         self.log_path = os.path.join(self.get_cur_dir(), self.config['general']['logpath'])
         my_tools.mkdir(self.log_path)
-        nowTime = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
+        nowTime = datetime.datetime.now().strftime('%Y-%m-%d-%H')
         self.log_file = os.path.join(self.log_path, self.config['general']['logfile'].replace("$TIME", nowTime))
         self.log = my_logger.logger(self.log_file, __name__)
 
@@ -60,6 +60,7 @@ class Global:
         # self.print_current_env_nformation()
 
     def print_current_env_nformation(self):
+        my_tools.TestPlatform()
         print("-----------------------------")
         print(ta.__describe__)
         print(ta.__version__)
