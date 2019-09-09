@@ -12,7 +12,7 @@ class TDaemon(daemon.Daemon):
         ta.g.log.debug("start daemon..")
 
     def run(self):
-        g_man.loadconfig_and_run()
+        g_man.service()
 
 def control_daemon(action):
     os.system(" ".join((sys.executable, __file__, action)))
@@ -28,6 +28,3 @@ if __name__ == '__main__':
         if arg in ('start', 'stop', 'restart'):
             d = TDaemon(ta.g.pid, verbose = 0)
             getattr(d, arg)()
-        if arg in ('thread'):
-            dt = DaemonThread()
-            dt.handle(ta.g.config_file)

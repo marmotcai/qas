@@ -1,5 +1,6 @@
 
 import os
+import sys
 import time
 import datetime as dt
 import multiprocessing
@@ -41,6 +42,19 @@ def isint(num):
         return isinstance(num, int)
     except:
         return False
+
+def print_sys_info():
+    lists = sys.argv  # 传递给Python脚本的命令行参数列表 => python p.py -> ['p.py'] / python p.py a 1 -> ['p.py', 'a', '1'] / 程序内执行 -> ['']
+    strs = sys.getdefaultencoding()  # 默认字符集名称
+    strs = sys.getfilesystemencoding()  # 系统文件名字符集名称
+    num = sys.getrefcount(object)  # 返回object的引用计数(比实际多1个)
+    dicts = sys.modules  # 已加载的模块, 可修改, 但不能通过修改返回的字典进行修改
+    lists = sys.path  # 模块搜索路径
+    sys.path.append(".")  # 动态添加模块搜索路径
+    strs = sys.platform  # 平台标识符(系统身份进行详细的检查,推荐使用) Linux:'linux' / Windows:'win32' / Cygwin:'cygwin' / Mac OS X:'darwin'
+    strs = sys.version  # python解释器版本
+    lists = sys.thread_info  # 线程信息
+    num = sys.api_version  # 解释器C API版本
 
 class Timer():
     def __init__(self):

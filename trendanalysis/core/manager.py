@@ -468,8 +468,10 @@ def schedule_analysis(at, cmd, args):
     if len(at) > 0 and at[0] in ("sunday"):
         schedule.every().sunday.at(at[1]).do(main, cmd, args)
 
-def loadconfig_and_run(filename):
-    g = global_obj.Global(filename)
+def service(filename = ""):
+    g = ta.g
+    if (len(filename) > 0):
+        g = global_obj.Global(filename)
     for index in range(0, len(g.schedules)):
         item = g.schedules[index]
         at = item['at'].split(",")
@@ -510,7 +512,7 @@ class DaemonThread:
     def __run(self, params):
         self.__sem.acquire()#信号量减1
         ta.g.log.debug("load config and run : " + params)
-        loadconfig_and_run(params)
+        service(params)
         self.__sem.release()#信号量加1
         return
 
@@ -521,7 +523,7 @@ def test(type):
     if type in ("gpu"):
         print(test_gpu())
     if type in ("d"):
-        loadconfig_and_run(ta.g.config_file)
+        service(ta.g.config_file)
 
 def test_gpu():
     device_name = tf.test.gpu_device_name()

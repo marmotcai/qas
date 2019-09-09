@@ -8,4 +8,5 @@ __name__ = 'qas'
 __describe__ = 'Atom Quant Analysis System'
 
 g = Global()
+
 # g.print_current_env_nformation()
