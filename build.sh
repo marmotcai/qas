@@ -17,14 +17,14 @@ case $cmd in
 
     test)
       printf "test mode\n"
-      docker run --rm -ti -v $app_path:/root/app -p 3280:8000 ${imagename} /bin/bash
+      docker run --rm -ti -p 3280:8000 ${imagename} /bin/bash
       exit 0
     ;;
 
     run)
       printf "app path: "$app_path"\n"
       docker rm -f my-qas
-      docker run -v $app_path:/root/app -p 3280:8000 --name my-qas ${imagename} # python /root/app/manage.py runserver 0.0.0.0:8000
+      docker run -ti -d -p 3280:8000 --name my-qas ${imagename} # python /root/app/manage.py runserver 0.0.0.0:8000
       exit 0
     ;;
 

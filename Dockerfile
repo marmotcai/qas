@@ -10,15 +10,25 @@ ENV PIP_TSINGHUA_URL="https://pypi.tuna.tsinghua.edu.cn/simple"
 RUN pip install --upgrade pip
 
 RUN mkdir -p $APP_PATH
-COPY ./requirements.txt $APP_PATH/requirements.txt
- 
-RUN if [ "${APP_GITURL}" != "null" ] ; then \
-      echo ${APP_GITURL} ;  \
-      git clone ${APP_GITURL} ${APP_PATH}  ; \
-    fi
+WORKDIR $APP_PATH
+
+# COPY ./requirements.txt $APP_PATH/requirements.txt
+COPY ./ ${APP_PATH}
+RUN ls -la /root/app/*
 
 # RUN pip install -i ${PIP_ALIYUN_URL} --no-cache-dir -r $APP_PATH/requirements.txt
 RUN pip install --no-cache-dir -r $APP_PATH/requirements.txt
+
+RUN python main.py -i "initcodefile"
+RUN python manage.py makemigrations && \
+    python manage.py migrate
+
+RUN if [ "${APP_GITURL}" != "null" ] ; then \
+      echo ${APP_GITURL} ;  \
+      git clone ${APP_GITURL} ${APP_PATH}  ; \
+      pip install --no-cache-dir -r $APP_PATH/requirements.txt ; \
+    fi
+
 
 COPY entrypoint.sh $WORK_DIR/entrypoint.sh
 RUN chmod +x entrypoint.sh
