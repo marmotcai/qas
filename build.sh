@@ -1,5 +1,6 @@
 #!/bin/bash
 
+imagename="marmotcai/qas"
 cmd=${1}
 param=${2}
 app_path=${PWD}
@@ -7,23 +8,23 @@ app_path=${PWD}
 case $cmd in
     build)
       if [[ $param =~ 'git' ]]; then
-        docker build --build-arg APP_GITURL=$param -t marmotcai/qas .
+        docker build --build-arg APP_GITURL=$param -t ${imagename} .
       else
-	docker build -t marmotcai/qas .
+	docker build -t ${imagename} .
       fi
       exit 0
     ;;
 
     test)
       printf "test mode\n"
-      docker run --rm -ti -v $app_path:/root/app  -p 9022:22 -p 8000:8000 marmotcai/qas /bin/bash
+      docker run --rm -ti -v $app_path:/root/app -p 3280:8000 ${imagename} /bin/bash
       exit 0
     ;;
 
     run)
       printf "app path: "$app_path"\n"
       docker rm -f my-qas
-      docker run -v $app_path:/root/app -p 9022:22 -p 8000:8000 --name my-qas marmotcai/qas python /root/app/main.py -v
+      docker run -v $app_path:/root/app -p 3280:8000 --name my-qas ${imagename} # python /root/app/manage.py runserver 0.0.0.0:8000
       exit 0
     ;;
 
@@ -33,9 +34,10 @@ case $cmd in
     ;;
 
   esac
-    echo "use: sh build.sh build (docker: build image)"
-    echo "use: sh build.sh test (docker: test image)"
-    echo "use: sh build.sh run (docker: run image)"
-    echo "use: sh build.sh install (python env install)"
+    echo "use: sh build.sh build"
+    echo "use: sh build.sh build https://github.com/marmotcai/qas.git"
+    echo "use: sh build.sh test"
+    echo "use: sh build.sh run"
+    echo "use: sh build.sh install"
 
 exit 0;
