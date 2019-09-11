@@ -1,10 +1,29 @@
 #!/bin/bash
 
-cd $APP_PATH
-python main.py -i "initcodefile"
-python manage.py makemigrations
-python manage.py migrate
-python manage.py runserver 0.0.0.0:8000
+cmd=${1}
+param=${2}
 
-# python main.py -m 300096
+case $cmd in 
+    init)
+      python main.py -i "initcodefile"
+      python manage.py makemigrations
+      python manage.py migrate
+      exit 0
+    ;;
 
+    run)
+      python manage.py runserver 0.0.0.0:8000
+      exit 0
+    ;;
+
+    daemon)
+      python main.py -d
+      exit 0
+    ;;
+
+esac
+    echo "use: ./entrypoint.sh init"
+    echo "use: ./entrypoint.sh run"
+    echo "use: ./entrypoint.sh daemon"
+
+exit 0

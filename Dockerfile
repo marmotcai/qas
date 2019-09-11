@@ -12,29 +12,22 @@ RUN pip install --upgrade pip
 RUN mkdir -p $APP_PATH
 WORKDIR $APP_PATH
 
-# COPY ./requirements.txt $APP_PATH/requirements.txt
-COPY ./ ${APP_PATH}
-RUN ls -la /root/app/*
-
-# RUN pip install -i ${PIP_ALIYUN_URL} --no-cache-dir -r $APP_PATH/requirements.txt
-RUN pip install --no-cache-dir -r $APP_PATH/requirements.txt
-
-RUN python main.py -i "initcodefile"
-RUN python manage.py makemigrations && \
-    python manage.py migrate
-
 RUN if [ "${APP_GITURL}" != "null" ] ; then \
       echo ${APP_GITURL} ;  \
       git clone ${APP_GITURL} ${APP_PATH}  ; \
       pip install --no-cache-dir -r $APP_PATH/requirements.txt ; \
+    else: \
+      # COPY ./requirements.txt $APP_PATH/requirements.txt ; \
+      COPY ./ ${APP_PATH} ; \
+      RUN ls -la /root/app/* ; \
     fi
 
+# RUN pip install -i ${PIP_ALIYUN_URL} --no-cache-dir -r $APP_PATH/requirements.txt
+RUN pip install --no-cache-dir -r $APP_PATH/requirements.txt
 
-COPY entrypoint.sh $WORK_DIR/entrypoint.sh
-RUN chmod +x entrypoint.sh
+RUN chmod +x entrypoint.sh && \
+    ./entrypoint.sh init
 
 EXPOSE 22 8000
 
-# CMD ["/usr/sbin/sshd", "-D"]
-# CMD ["$WORK_DIR/entrypoint.sh"]
-CMD ["python", "/root/app/manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["./entrypoint.sh"]
