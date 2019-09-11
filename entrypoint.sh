@@ -20,7 +20,7 @@ case $cmd in
     ;;
 
     daemon)
-      python main.py -d
+      python main.py -s start
       exit 0
     ;;
 
