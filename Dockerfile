@@ -28,6 +28,9 @@ RUN pip install --no-cache-dir -r $APP_PATH/requirements.txt
 RUN chmod +x entrypoint.sh && \
     ./entrypoint.sh init
 
+RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+# RUN timedatectl status
+
 EXPOSE 22 8000
 
 CMD ["./entrypoint.sh", "run"]

@@ -6,7 +6,7 @@
 		"schedule": [
 			{
 				"cmd": "./main.py -m lst:init_code.csv",
-				"at": "day,14:30"
+				"at": "day,15:30"
 			},
 			{
 				"cmd": "python,./main.py -d all",

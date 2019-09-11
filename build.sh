@@ -24,7 +24,7 @@ case $cmd in
     run)
       printf "app path: "$app_path"\n"
       docker rm -f my-qas
-      docker run -ti -d -p 3280:8000 --name my-qas -e PYTHONIOENCODING=gbk ${imagename} # python /root/app/manage.py runserver 0.0.0.0:8000
+      docker run -ti -d -p 3280:8000 --name my-qas ${imagename} # python /root/app/manage.py runserver 0.0.0.0:8000
       exit 0
     ;;
 
