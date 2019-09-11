@@ -129,7 +129,7 @@ def index(request):
 
 def init_db():
     initcode_file = os.path.join(ta.g.data_path, ta.g.config["data"]["init_codefile"])
-    data_frame = pd.read_csv(initcode_file, index_col=False, encoding='gbk')
+    data_frame = pd.read_csv(initcode_file, index_col=False, encoding='UTF-8')
     for index, row in data_frame.iterrows():
         code = "%06d" % int(row['code'])
         Company.objects.create(name=row['name'], stock_code=code)
