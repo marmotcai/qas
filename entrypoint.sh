@@ -14,7 +14,7 @@ case $cmd in
     ;;
 
     run)
-      python main.py -s
+      python main.py -s start
       python manage.py runserver 0.0.0.0:8000
       exit 0
     ;;

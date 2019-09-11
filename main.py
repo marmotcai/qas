@@ -83,7 +83,7 @@ def main(cmd, argv):
         my_tools.process(cmd, argv).start()
         return
     try:
-        options, args = getopt.getopt(argv, "hvuiss:t:d:m:p:e:", ["help", "version", "update", "initialize", "service", "service=", "test=", "download=", "modeling=", "evaluation=", "predict="])
+        options, args = getopt.getopt(argv, "hvuis:t:d:m:p:e:", ["help", "version", "update", "initialize", "service=", "test=", "download=", "modeling=", "evaluation=", "predict="])
     except getopt.GetoptError:
         sys.exit()
 
@@ -103,7 +103,9 @@ def main(cmd, argv):
                 print("windows platform is not suppor daemon mode and run service mode")
                 service("")
             else:
-                os.system(sys.executable + " daemon_main.py " + value)
+                cmdstr = sys.executable + " daemon_main.py " + value
+                print(cmdstr)
+                os.system(cmdstr)
         if name in ("-t", "--test"):
             g_man.test(value)
         if name in ("-d", "--download"):
