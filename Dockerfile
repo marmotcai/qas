@@ -16,11 +16,11 @@ RUN if [ "${APP_GITURL}" != "null" ] ; then \
       echo ${APP_GITURL} ;  \
       git clone ${APP_GITURL} ${APP_PATH}  ; \
       pip install --no-cache-dir -r $APP_PATH/requirements.txt ; \
-    else: \
-      # COPY ./requirements.txt $APP_PATH/requirements.txt ; \
-      COPY ./ ${APP_PATH} ; \
-      RUN ls -la /root/app/* ; \
     fi
+
+# COPY ./requirements.txt $APP_PATH/requirements.txt ; \
+COPY ./ ${APP_PATH}
+RUN ls -la ${APP_PATH}/*
 
 # RUN pip install -i ${PIP_ALIYUN_URL} --no-cache-dir -r $APP_PATH/requirements.txt
 RUN pip install --no-cache-dir -r $APP_PATH/requirements.txt
@@ -30,4 +30,4 @@ RUN chmod +x entrypoint.sh && \
 
 EXPOSE 22 8000
 
-CMD ["./entrypoint.sh"]
+CMD ["./entrypoint.sh", "run"]

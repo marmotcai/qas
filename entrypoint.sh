@@ -5,6 +5,8 @@ param=${2}
 
 case $cmd in 
     init)
+      pip install --no-cache-dir -r requirements.txt      
+
       python main.py -i "initcodefile"
       python manage.py makemigrations
       python manage.py migrate
