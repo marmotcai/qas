@@ -1,16 +1,16 @@
 {
 	"general": {
-        "logpath": "./data/log/",
+                "logpath": "./data/log/",
 		"logfile": "$TIME.log",
 		"startschedule": "true",
 		"schedule": [
 			{
 				"cmd": "./main.py -m lst:init_code.csv",
-				"at": "monday,12:20"
+				"at": "day,14:30"
 			},
 			{
-				"cmd": "python,./main.py -m 601988",
-				"at": "day,15:15"
+				"cmd": "python,./main.py -d all",
+				"at": "saturday,00:00"
 			}
 		]
 	},
