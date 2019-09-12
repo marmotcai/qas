@@ -2,8 +2,11 @@ import os
 import numpy as np
 import datetime as dt
 from numpy import newaxis
+import trendanalysis as ta
 from trendanalysis.utils.tools import Timer
+import keras
 from keras.layers import Dense, Dropout, LSTM
+from keras.utils import plot_model
 from keras.models import Sequential, load_model
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 
@@ -21,6 +24,7 @@ class Model():
 		print('[Model] Loading model from file %s' % filepath)
 		self.model = load_model(filepath)
 
+	# TODO( build_model(self, configs) ): 新建一个模型，输入配置文件
 	def build_model(self, configs):
 		"""
 		新建一个模型
@@ -44,10 +48,13 @@ class Model():
 			if layer['type'] == 'dropout':
 				self.model.add(Dropout(dropout_rate))
 
-		self.model.compile(loss=configs['model']['loss'], optimizer=configs['model']['optimizer'])
+		self.model.compile(loss = configs['model']['loss'], optimizer = configs['model']['optimizer'])
 
 		print('[Model] Model Compiled')
 		timer.stop()	#输出构建一个模型耗时
+
+		self.model.summary()
+		plot_model(self.model, to_file = ta.g.log_path + 'model.png')
 
 	def train(self, x, y, epochs, batch_size, save_dir):
 		timer = Timer()
@@ -56,23 +63,24 @@ class Model():
 		print('[Model] %s epochs, %s batch size' % (epochs, batch_size))
 		
 		save_fname = os.path.join(save_dir, '%s-e%s.h5' % (dt.datetime.now().strftime('%d%m%Y-%H%M%S'), str(epochs)))
-		callbacks = [
-			EarlyStopping(monitor='val_loss', patience=2),
-			ModelCheckpoint(filepath=save_fname, monitor='val_loss', save_best_only=True)
-		]
+	#	callbacks = [
+	#		EarlyStopping(monitor='val_loss', patience=2),
+	#		ModelCheckpoint(filepath=save_fname, monitor='val_loss', save_best_only=True)
+	#	]
+		callbacks = keras.callbacks.TensorBoard(log_dir = ta.g.log_path, write_graph = True, write_images = True)
 		self.model.fit(
 			x,
 			y,
-			epochs=epochs,
-			batch_size=batch_size,
-			callbacks=callbacks
+			epochs = epochs,
+			batch_size = batch_size,
+			callbacks = callbacks
 		)
-		self.model.save(save_fname)	#保存训练好的模型
+		self.model.save(save_fname)	# 保存训练好的模型
 
 		print('[Model] Training Completed. Model saved as %s' % save_fname)
-		timer.stop()	#输出训练耗时
+		timer.stop() # 输出训练耗时
 
-	def train_generator(self, data_gen, epochs, batch_size, steps_per_epoch, save_dir,save_name):
+	def train_generator(self, data_gen, epochs, batch_size, steps_per_epoch, save_dir, save_name):
 		'''
 		由data_gen数据产生器来，逐步产生训练数据，而不是一次性将数据读入到内存
 		'''
@@ -84,7 +92,7 @@ class Model():
 		# save_fname = os.path.join(save_dir, '%s-e%s.h5' % (dt.datetime.now().strftime('%d%m%Y-%H%M%S'), str(epochs)))
 		save_fname = os.path.join(save_dir, save_name+'.h5')
 		callbacks = [
-			ModelCheckpoint(filepath=save_fname, monitor='loss', save_best_only=True)
+			ModelCheckpoint(filepath = save_fname, monitor = 'loss', save_best_only = True)
 		]
 		self.model.fit_generator(
 			data_gen,

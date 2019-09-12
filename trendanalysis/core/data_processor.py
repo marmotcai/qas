@@ -118,7 +118,7 @@ class DataLoader():
 		cols:选择data的一列或者多列进行分析，如 Close 和 Volume
 		'''
 		dataframe = pd.read_csv(filename)
-		dataframe = self.model_rate(dataframe)
+		# dataframe = self.model_rate(dataframe)
 
 		i_split = int(len(dataframe) * split)
 		self.data_train = dataframe.get(cols).values[:i_split]		#选择指定的列 进行分割 得到 未处理的训练数据
@@ -150,10 +150,10 @@ class DataLoader():
 			data_windows.append(self.data_test[i:i+seq_len])	#每一个元素是长度为seq_len的 list即一个window
 
 		data_windows = np.array(data_windows).astype(float)
-		data_windows = self.normalise_windows(data_windows, single_window=False) if normalise else data_windows
+		data_windows = self.normalise_windows(data_windows, single_window = False) if normalise else data_windows
 
-		x = data_windows[:, :-1]
-		y = data_windows[:, -1, [0]]
+		x = data_windows[:, :-1] # 获取每个数据窗口的前除最后一组数据的其它全部数据
+		y = data_windows[:, -1, [0]] # 获取每个数据窗口最后一组数据其中的开盘价
 
 		return x, y
 
@@ -190,9 +190,9 @@ class DataLoader():
 
 	def _next_window(self, i, seq_len, normalise):
 		'''Generates the next data window from the given index location i'''
-		window = self.data_train[i:i+seq_len]
-		window = self.normalise_windows(window, single_window=True)[0] if normalise else window
-		x = window[:-1]
+		window = self.data_train[i : i + seq_len]
+		window = self.normalise_windows(window, single_window = True)[0] if normalise else window
+		x = window[: -1]
 		y = window[-1, [0]]  # 最后一行的 0个元素 组成array类型，若是[0,2]则取第0个和第2个元素组成array，[-1, 0]：则是取最后一行第0个元素，
         # 只返回该元素的值[]和()用于索引都是切片操作，所以这里的y即label是 第一列Close列
 		return x, y

@@ -623,8 +623,10 @@ def ai_acc_xed2ext(y_true,y_pred,ky0=5,fgDebug=False):
     #2
     y_num=len(y_true)
     #df['y_true'],df['y_pred']=zdat.ds4x(y_true,df.index),zdat.ds4x(y_pred,df.index)
-    df['y_true'],df['y_pred']=y_true,y_pred
-    df['y_diff']=np.abs(df.y_true-df.y_pred)
+    df['y_pred'] = y_pred
+    df['y_true'] = y_true
+
+    df['y_diff'] = np.abs(df.y_true-df.y_pred)
     #3
     df['y_true2']=df['y_true']
     df.loc[df['y_true'] == 0, 'y_true2'] =0.00001

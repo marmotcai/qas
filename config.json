@@ -49,7 +49,7 @@
 		],
 		"sequence_length": 30,
 		"train_test_split": 0.85,
-		"normalise": true
+		"normalise": false
 	},
 	"training": {
 		"epochs": 1,
@@ -65,7 +65,7 @@
 				"type": "lstm",
 				"neurons": 100,
 				"input_timesteps": 29,
-				"input_dim": 15,
+				"input_dim": 5,
 				"return_seq": true
 			},
 			{

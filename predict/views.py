@@ -115,6 +115,7 @@ def index(request):
     history_data.company = company
     history_data.set_data(my_man.get_hist_data(code=stock_code, recent_day=20))
     history_data.save()
+
     recent_data = history_data.get_data()
     predict_data = models.PredictData()
     predict_data.company = company

@@ -22,6 +22,7 @@ from trendanalysis.core import evaluation as eva
 from trendanalysis.core import model as my_model
 from trendanalysis.utils import tools as my_tools
 from trendanalysis.core.data_processor import DataLoader
+from trendanalysis.vendor import ztools_tq as ztq
 
 ################################################################################
 
@@ -259,18 +260,19 @@ def prepared(params):
 
 # TODO(atoml.com): 训练入口
 def train(params):
-    type, code, datafile, modfile, lstfile = prepared(params)
+    _, code, datafile, modfile, lstfile = prepared(params)
     if len(lstfile) > 0:
         data_frame = pd.read_csv(lstfile, index_col=False, encoding='gbk')
         for index, row in data_frame.iterrows():
             code = "%06d" % int(row['code'])
             _, datafile = my_dm.download_from_code(code, '2007-01-01')
             print(row['code'], ':', row['name'])
-            training(type, code, datafile)
+            training(code, datafile)
     else:
-        training(type, code, datafile)
+        training(code, datafile)
 
-def training(type, code, datafile):
+# TODO( training(code, datafile) ): 训练执行函数，输入股票代码或者数据文件
+def training(code, datafile):
 
     m = my_model.Model()
     m.build_model(ta.g.config)  # 根据配置文件新建模型
@@ -281,7 +283,11 @@ def training(type, code, datafile):
         split = 1  # 若不评估模型准确度，则将全部历史数据用于训练
 
     # 从本地加载训练和测试数据
-    data = DataLoader(datafile, split, ta.g.config['data']['ohlcv'] + ta.g.config['data']['profit'])
+    data = DataLoader(datafile,
+                      split,
+                      ta.g.config['data']['ohlcv']
+                      # + ta.g.config['data']['profit']
+                      )
 
     # 训练模型：
     # out-of memory generative training
@@ -306,9 +312,9 @@ def training(type, code, datafile):
             seq_len=ta.g.config['data']['sequence_length'],
             normalise=ta.g.config['data']['normalise']
         )
+        predictions = m.predict_sequences_multiple(x_test,  ta.g.config['data']['sequence_length'],
+                                                            ta.g.config['data']['sequence_length'])
 
-        predictions = m.predict_sequences_multiple(x_test, ta.g.config['data']['sequence_length'],
-                                                       ta.g.config['data']['sequence_length'])
         print("训练：\n", predictions)
 
 def plot_results(predicted_data, true_data):  # predicted_data与true_data：同长度一维数组
@@ -322,25 +328,41 @@ def plot_results(predicted_data, true_data):  # predicted_data与true_data：同
 
 # TODO(atoml.com): 预测入口
 # 对指定公司的股票进行预测
-def prediction(params):
+def prediction(params, real = True, pre_len = 30, plot = False):
     type, code, datafile, modfile, lstfile = prepared(params)
-
-    '''
-    使用保存的模型，对输入数据进行预测
-    '''
-    data = DataLoader(
-        datafile,  # configs['data']['filename']
-        ta.g.config['data']['train_test_split'],
-        ta.g.config['data']['ohlcv'] + ta.g.config['data']['profit']
-    )
 
     file_path = modfile
     m = my_model.Model()
     keras.backend.clear_session()
     m.load_model(file_path)  # 根据配置文件新建模型
 
-    pre_len = 30
-    real = False
+    #####################################################################
+    '''
+    使用保存的模型，对输入数据进行预测
+    '''
+    data = DataLoader(
+        datafile,  # configs['data']['filename']
+        ta.g.config['data']['train_test_split'],
+        ta.g.config['data']['ohlcv']
+        # + ta.g.config['data']['profit']
+    )
+
+    x_test, y_test = data.get_test_data(
+        seq_len=ta.g.config['data']['sequence_length'],
+        normalise=ta.g.config['data']['normalise']
+    )
+
+    prediction_len = ta.g.config['data']['sequence_length']
+    for i in range(int(len(x_test) / prediction_len)):
+        curr_frame = x_test[i * prediction_len]
+        for j in range(prediction_len):
+            predictions = m.model.predict(curr_frame[None, :, :])[0, 0]
+            # predictions = m.predict_1_win_sequence(curr_frame, ta.g.config['data']['sequence_length'], pre_len)
+            print(predictions)
+
+    return
+    #####################################################################
+
     # predict_length = configs['data']['sequence_length']   # 预测长度
     predict_length = pre_len
     if real:  # 用最近一个窗口的数据进行预测，没有对比数据
@@ -378,10 +400,16 @@ def prediction(params):
     predictions = predictions_array.tolist()
 
     print("预测数据:\n", predictions)
+    y_array = np.array(y_test)
+    y_array = base * (1 + y_array)
+    y_test = y_array.tolist()
+
+    dacc, dfx, a10 = ztq.ai_acc_xed2ext(y_test, predictions, ky0 = 3, fgDebug = True)
+    print("dacc:\n", dacc)
+
     if not real:
         print("真实数据：\n", y_test_real)
 
-    plot = False
     # plot_results_multiple(predictions, y_test, predict_length)
     if plot:
         if real:
@@ -420,7 +448,7 @@ def get_hist_data(code, recent_day=30):  # 获取某股票，指定天数的历�
     return close_data.tolist()
 
 def modeling(params):
-    type, code, datafile, modfile = prepared(params)
+    type, code, datafile, modfile, lstfile = prepared(params)
 
     mo = model(type, datafile)
     mo.modeling(modfile)

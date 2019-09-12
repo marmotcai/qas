@@ -20,7 +20,7 @@ class evaluation():
         y_pred = np.argmax(y_pred0, axis = 1) + 1
         #
         df_x['y_pred'] = zdat.ds4x(y_pred, df_x.index, True)
-        df_x.to_csv(ta.global_obj.g.data_path + 'my.csv', index = False)
+        df_x.to_csv(ta.g.data_path + 'my.csv', index = False)
         print('NaN的数量:', df_x.isnull().sum().sum())
 
         print('\n#6 acc准确度分析')
