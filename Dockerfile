@@ -33,4 +33,5 @@ RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
 EXPOSE 22 8000
 
-CMD ["./entrypoint.sh", "run"]
+CMD ["/usr/sbin/sshd", "-D"]
+# CMD ["./entrypoint.sh", "run"]

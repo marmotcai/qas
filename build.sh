@@ -17,14 +17,22 @@ case $cmd in
 
     test)
       printf "test mode\n"
-      docker run --rm -ti -p 3280:8000 ${imagename} /bin/bash
+      docker run --rm -ti -p 3280:8000 -p 3222:22 ${imagename} /bin/bash
+      exit 0
+    ;;
+
+    debug)
+      printf "app path: "$app_path"\n"
+      docker rm -f my-qas
+      # docker run -p 3222:22 -p 3280:8000 -v /home/x/myfiles/workspace/qas:/root/app --name my-qas marmotcai/qas /bin/bash
+      docker run -ti -d -p 3280:8000 -p 3222:22 --name my-qas -v $PWD:/root/qas ${imagename} # python /root/app/manage.py runserver 0.0.0.0:8000
       exit 0
     ;;
 
     run)
       printf "app path: "$app_path"\n"
       docker rm -f my-qas
-      docker run -ti -d -p 3280:8000 --name my-qas ${imagename} # python /root/app/manage.py runserver 0.0.0.0:8000
+      docker run -ti -d -p 3280:8000 -p 3222:22 --name my-qas ${imagename} # python /root/app/manage.py runserver 0.0.0.0:8000
       exit 0
     ;;
 
@@ -37,6 +45,7 @@ case $cmd in
     echo "use: sh build.sh build"
     echo "use: sh build.sh build https://github.com/marmotcai/qas.git"
     echo "use: sh build.sh test"
+    echo "use: sh build.sh debug"
     echo "use: sh build.sh run"
     echo "use: sh build.sh install"
 
