@@ -10,6 +10,11 @@ ENV PIP_TSINGHUA_URL="https://pypi.tuna.tsinghua.edu.cn/simple"
 RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 # RUN timedatectl status
 
+RUN apt update && \
+    apt install -y graphviz && \
+    apt autoremove && \
+    apt clean
+
 RUN pip install --upgrade pip
 
 RUN mkdir -p $APP_PATH
@@ -22,13 +27,11 @@ RUN if [ "${APP_GITURL}" != "null" ] ; then \
 # COPY ./requirements.txt $APP_PATH/requirements.txt ; \
 COPY ./ ${APP_PATH}
 WORKDIR $APP_PATH
-RUN ls -la ./*
 
-RUN pip install -i ${PIP_TSINGHUA_URL} --no-cache-dir -r $APP_PATH/requirements.txt
-# RUN pip install --no-cache-dir -r ./requirements.txt
+# RUN pip install -i ${PIP_TSINGHUA_URL} --no-cache-dir -r $APP_PATH/requirements.txt
+RUN pip install --no-cache-dir -r ./requirements.txt
 RUN ls -l $APP_PATH/entrypoint.sh
-RUN chmod +x $APP_PATH/entrypoint.sh
-# RUN sh $APP_PATH/entrypoint.sh init
+RUN chmod +x $APP_PATH/entrypoint.sh # \ sh $APP_PATH/entrypoint.sh init
 
 EXPOSE 22 8000
 

@@ -17,7 +17,7 @@ case $cmd in
 
     test)
       printf "test mode\n"
-      docker run --rm -ti -p 3280:8000 -p 3222:22 ${imagename} /bin/bash
+      docker run --rm -ti -p 3280:8000 -p 3222:22 -v $PWD:/root/qas ${imagename} /bin/bash
       exit 0
     ;;
 
