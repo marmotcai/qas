@@ -122,9 +122,8 @@ class DataLoaderEx():
         cols:选择data的一列或者多列进行分析，如 Close 和 Volume
         '''
         dataframe = pd.read_csv(filename)
-        print(dataframe.columns.values)
-
-        dataframe, self.features_lst = self.model_rate(dataframe)
+        dataframe = self.model_rate(dataframe)
+        self.features_lst = dataframe.columns.values
 
         i_split = int(len(dataframe) * split)
         self.data_train = dataframe.get(self.features_lst)[:i_split]  # 选择指定的列 进行分割 得到 未处理的训练数据
@@ -135,7 +134,7 @@ class DataLoaderEx():
 
     def model_rate(self, df):
         df = df.sort_values('date')  # 日期排序
-        df, features_lst = DataPrepared.prepared_pre_next(df)  # 前一天收盘价和后一天的开盘价
+        df = DataPrepared.prepared_pre_next(df)  # 前一天收盘价和后一天的开盘价
         df = DataPrepared.prepared_next_profit(df, 1, 10, 1)  # 计算第1天到第10天的收益值，从第1天开始，计算10次，步长为1天\
         df = DataPrepared.prepared_next_rate(df, 5, 2, 5)  # 计算第5天和第10天的收益率，从第5天开始，计算2次，步长为5天
         df = DataPrepared.prepared_avg(df)  # 填充均值
@@ -281,7 +280,7 @@ def training(code, datafile):
     y_test = my_dm.util.prepared_y(data.data_test, 'next_rate_10_type', 'onehot')
 
     y_lst = y_train[0]
-    x_lst = features_lst
+    x_lst = data.features_lst
 
     num_in, num_out = len(x_lst), len(y_lst)
 
