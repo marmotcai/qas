@@ -20,9 +20,11 @@ from trendanalysis.vendor import zai_keras as zks
 from trendanalysis.core import data_manager as my_dm
 from trendanalysis.core import evaluation as eva
 from trendanalysis.core import model as my_model
+from trendanalysis.core import modelex as my_modelex
 from trendanalysis.utils import tools as my_tools
 from trendanalysis.core.data_processor import DataLoader
 from trendanalysis.vendor import ztools_tq as ztq
+
 
 ################################################################################
 
@@ -37,7 +39,7 @@ class model():
         if len(datafile) > 0:
             self.setdata(datafile)
 
-    def setdata(self, filename = ""):
+    def setdata(self, filename=""):
         self.do = my_dm.train_data(filename)
 
     def setmod(self, filename):
@@ -50,18 +52,19 @@ class model():
         my_tools.check_path_exists(filename)
         return model.save(filename)
 
-    def modeling(self, model_filename = ""):
+    def modeling(self, model_filename=""):
 
         if (self.do == None):
             return
 
-        self.do.prepared(self.type, action='modeling') # 数据预处理
+        self.do.prepared(self.type, action='modeling')  # 数据预处理
 
         # 分离训练和测试数据
         self.df_train, self.df_test = my_dm.util.split(self.do.df, 0.6)
 
         # 构建训练特征数据
-        other_features_lst = ta.g.config['data']['ohlcv'] + ta.g.config['data']['profit'] # + xagv_lst + ma100_lst + other_lst
+        other_features_lst = ta.g.config['data']['ohlcv'] + ta.g.config['data'][
+            'profit']  # + xagv_lst + ma100_lst + other_lst
         self.x_train = my_dm.util.get_features(self.df_train, other_features_lst)
         self.x_test = my_dm.util.get_features(self.df_test, other_features_lst)
 
@@ -105,12 +108,12 @@ class model():
             mx = self.setmod(model_filename)
 
         mx.summary()
-        plot_model(mx, to_file = ta.g.log_path + 'model.png')
+        plot_model(mx, to_file=ta.g.log_path + 'model.png')
 
         print('\n#4 模型训练 fit')
-        tbCallBack = keras.callbacks.TensorBoard(log_dir = ta.g.log_path, write_graph = True, write_images=True)
+        tbCallBack = keras.callbacks.TensorBoard(log_dir=ta.g.log_path, write_graph=True, write_images=True)
         tn0 = arrow.now()
-        mx.fit(self.x_train, self.y_train, epochs = 500, batch_size = 512, callbacks = [tbCallBack])
+        mx.fit(self.x_train, self.y_train, epochs=500, batch_size=512, callbacks=[tbCallBack])
         tn = zt.timNSec('', tn0, True)
         self.save(mx, model_filename)
 
@@ -132,9 +135,10 @@ class model():
         if (self.do == None):
             return
 
-        self.do.prepared(self.type, action='predict') # 数据预处理
+        self.do.prepared(self.type, action='predict')  # 数据预处理
 
-        other_features_lst = ta.g.config['data']['ohlcv'] + ta.g.config['data']['profit'] # + xagv_lst + ma100_lst + other_lst
+        other_features_lst = ta.g.config['data']['ohlcv'] + ta.g.config['data'][
+            'profit']  # + xagv_lst + ma100_lst + other_lst
         x_df = my_dm.util.get_features(self.do.df.tail(5), other_features_lst)
 
         txn = x_df.shape[0]
@@ -148,9 +152,11 @@ class model():
         print(y_df)
         return y_df
 
+
 ################################################################################
 
 import csv
+
 
 def init_initcodefile():
     initcode_file = os.path.join(ta.g.data_path, ta.g.config["data"]["init_codefile"])
@@ -168,12 +174,14 @@ def init_initcodefile():
         writer.writerows(rows)  # 同时写入多行信息
         f.close()
 
+
 def init_db():
     initcode_file = os.path.join(ta.g.data_path, ta.g.config["data"]["initcodefile"])
     data_frame = pd.read_csv(initcode_file, index_col=False, encoding='gbk')
     for index, row in data_frame.iterrows():
         # Company.objects.create(name=row['name'], stock_code=row['code'])
         print(row['code'], ':', row['name'])
+
 
 def initialize(params):
     if "initcodefile" == params.lower():
@@ -183,11 +191,14 @@ def initialize(params):
     if "downall" == params.lower():
         my_dm.download_all()
 
+
 def prepared(params):
     param_lst = []
-    if "," in params: param_lst = params.split(",")
+    if "," in params:
+        param_lst = params.split(",")
     else:
-        if "|" in params: param_lst = params.split("|")
+        if "|" in params:
+            param_lst = params.split("|")
         else:
             param_lst.append(params)
 
@@ -233,7 +244,7 @@ def prepared(params):
 
     type, code, datafile, modfile, lstfile = get_param(param_lst)
 
-    if len(code) > 0 and len(datafile) <= 0: # 有代码没数据文件则先下载
+    if len(code) > 0 and len(datafile) <= 0:  # 有代码没数据文件则先下载
         _, datafile = my_dm.download_from_code(code, '2007-01-01')
 
     if len(lstfile) > 0:
@@ -258,6 +269,7 @@ def prepared(params):
 
     return type, code, datafile, modfile, lstfile
 
+
 # TODO(atoml.com): 训练入口
 def train(params):
     _, code, datafile, modfile, lstfile = prepared(params)
@@ -271,9 +283,9 @@ def train(params):
     else:
         training(code, datafile)
 
+
 # TODO( training(code, datafile) ): 训练执行函数，输入股票代码或者数据文件
 def training(code, datafile):
-
     m = my_model.Model()
     m.build_model(ta.g.config)  # 根据配置文件新建模型
 
@@ -312,10 +324,13 @@ def training(code, datafile):
             seq_len=ta.g.config['data']['sequence_length'],
             normalise=ta.g.config['data']['normalise']
         )
-        predictions = m.predict_sequences_multiple(x_test,  ta.g.config['data']['sequence_length'],
-                                                            ta.g.config['data']['sequence_length'])
+        # predictions = m.predict_sequences_multiple(x_test,  ta.g.config['data']['sequence_length'], ta.g.config['data']['sequence_length'])
 
-        print("训练：\n", predictions)
+        y_pred = m.predict_sequence_full(x_test, ta.g.config['data']['sequence_length'])
+        dacc, dfx, a10 = ztq.ai_acc_xed2ext(y_test, y_pred, ky0=3, fgDebug=True)
+
+        print("训练：acc: {0:.2f}%; \n", dacc)
+
 
 def plot_results(predicted_data, true_data):  # predicted_data与true_data：同长度一维数组
     fig = plt.figure(facecolor='white')
@@ -328,7 +343,7 @@ def plot_results(predicted_data, true_data):  # predicted_data与true_data：同
 
 # TODO(atoml.com): 预测入口
 # 对指定公司的股票进行预测
-def prediction(params, real = True, pre_len = 30, plot = False):
+def prediction(params, real=True, pre_len=30, plot=False):
     type, code, datafile, modfile, lstfile = prepared(params)
 
     file_path = modfile
@@ -352,14 +367,9 @@ def prediction(params, real = True, pre_len = 30, plot = False):
         normalise=ta.g.config['data']['normalise']
     )
 
-    prediction_len = ta.g.config['data']['sequence_length']
-    for i in range(int(len(x_test) / prediction_len)):
-        curr_frame = x_test[i * prediction_len]
-        for j in range(prediction_len):
-            predictions = m.model.predict(curr_frame[None, :, :])[0, 0]
-            # predictions = m.predict_1_win_sequence(curr_frame, ta.g.config['data']['sequence_length'], pre_len)
-            print(predictions)
-
+    y0 = m.predict_1_win_sequence(x_test, ta.g.config['data']['sequence_length'],
+                                  ta.g.config['data']['sequence_length'])
+    dacc, dfx, a10 = ztq.ai_acc_xed2ext(y_test, y0, ky0=3, fgDebug=True)
     return
     #####################################################################
 
@@ -404,7 +414,7 @@ def prediction(params, real = True, pre_len = 30, plot = False):
     y_array = base * (1 + y_array)
     y_test = y_array.tolist()
 
-    dacc, dfx, a10 = ztq.ai_acc_xed2ext(y_test, predictions, ky0 = 3, fgDebug = True)
+    dacc, dfx, a10 = ztq.ai_acc_xed2ext(y_test, predictions, ky0=3, fgDebug=True)
     print("dacc:\n", dacc)
 
     if not real:
@@ -419,22 +429,24 @@ def prediction(params, real = True, pre_len = 30, plot = False):
 
     return format_predictions(predictions)
 
-def format_predictions(predictions):    # 给预测数据添加对应日期
+
+def format_predictions(predictions):  # 给预测数据添加对应日期
     date_predict = []
     cur = datetime.now()
     cur += timedelta(days=1)
     counter = 0
 
     while counter < len(predictions):
-        if cur.isoweekday()  == 6:
+        if cur.isoweekday() == 6:
             cur = cur + timedelta(days=2)
-        if cur.isoweekday()  == 7:
+        if cur.isoweekday() == 7:
             cur = cur + timedelta(days=1)
-        date_predict.append([cur.strftime("%Y-%m-%d"),predictions[counter]])
+        date_predict.append([cur.strftime("%Y-%m-%d"), predictions[counter]])
         cur = cur + timedelta(days=1)
         counter += 1
 
     return date_predict
+
 
 # TODO(atoml.com): 获取历史数据
 # 二维数组：[[data,value],[...]]
@@ -447,11 +459,11 @@ def get_hist_data(code, recent_day=30):  # 获取某股票，指定天数的历�
     close_data = data_frame.get(cols).values[-recent_day:]
     return close_data.tolist()
 
+
 def modeling(params):
     type, code, datafile, modfile, lstfile = prepared(params)
 
-    mo = model(type, datafile)
-    mo.modeling(modfile)
+    my_modelex.training(code, datafile)
 
 def predict(params):
     type, code, datafile, modfile = prepared(params)
@@ -463,8 +475,10 @@ def predict(params):
     y = mo.predict(modfile)
     print(y)
 
+
 def evaluation(params):
     print(params)
+
 
 def test(type):
     if type in ("gpu"):
@@ -472,12 +486,14 @@ def test(type):
     if type in ("d"):
         service(ta.g.config_file)
 
+
 def test_gpu():
     device_name = tf.test.gpu_device_name()
     if device_name != '/device:GPU:0':
         return 'GPU device not found'
         # raise SystemError('GPU device not found')
     return 'Found GPU at: {}'.format(device_name)
+
 
 def main(argv):
     try:
@@ -489,13 +505,14 @@ def main(argv):
         if name in ("-i", "--initialize"):
             initialize(value)
         if name in ("-m", "--modeling"):
-            # modeling(value)
-            train(value)
+            modeling(value)
+            # train(value)
         if name in ("-p", "--predict"):
             # predict(value)
             prediction(value)
         if name in ("-t", "--test"):
             test_gpu()
+
 
 if __name__ == '__main__':
     main(sys.argv[1:])

@@ -38,17 +38,36 @@
 		"ohlcv": [
 			"open", "high", "low", "close", "volume"
 		],
+		"next": [
+			"pre_close", "next_open", "next_ohlc_avg", "next_price_range", "next_amp", "next_amp_type"
+		],
 		"dohlcv": [
 			"date", "open", "high", "low", "close", "volume"
 		],
         "profit": [
             "next_profit_1", "next_profit_2", "next_profit_3", "next_profit_4", "next_profit_5", "next_profit_6", "next_profit_7", "next_profit_8", "next_profit_9", "next_profit_10"
         ],
+		"nextrate": [
+			"next_rate5", "next_rate_10"
+		],
+		"avg": [
+			"ohlc_avg", "dprice_max", "dprice_min", "dprice_avg"
+		],
+		"xavg": [
+			"xavg1", "xavg2", "xavg3", "xavg4", "xavg5", "xavg6", "xavg7", "xavg", "xavg9"
+		],
+		"ma100": [
+			"ma_2", "ma_3", "ma_5", "ma_10", "ma_15", "ma_20", "ma_25", "ma_30", "ma_50", "ma_100"
+		],
+		"amp": [
+			"price_range", "amp", "amp_type"
+		],
 		"columns": [
 			"Close","Open","High","Low"
 		],
+		"evaluation": true,
 		"sequence_length": 30,
-		"train_test_split": 0.85,
+		"train_test_split": 0.98,
 		"normalise": false
 	},
 	"training": {
