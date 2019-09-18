@@ -1,6 +1,10 @@
 # -*-coding:utf-8 -*-
+
+import arrow
 import numpy as np
 import pandas as pd
+
+import keras
 from keras.models import Sequential, load_model
 from keras.layers import Dense, Dropout, LSTM
 from keras.utils import plot_model
@@ -13,6 +17,9 @@ from trendanalysis.vendor import zsys
 from trendanalysis.vendor import ztools as zt
 from trendanalysis.vendor import zpd_talib as zta
 from trendanalysis.vendor import ztools_data as zdat
+from trendanalysis.utils import tools as my_tools
+from trendanalysis.core import evaluation as eva
+from trendanalysis.vendor import zai_keras as zks
 
 class DataPrepared():
     def __init__(self):
@@ -229,6 +236,12 @@ class ModelEx():
         print('[Model] Loading model from file %s' % filepath)
         self.model = load_model(filepath)
 
+    def save_model(self, filename):
+        if len(filename) <= 0:
+            return False
+        my_tools.check_path_exists(filename)
+        return self.model.save(filename)
+
     def build_model(self, configs):
         """
         新建一个模型
@@ -245,42 +258,41 @@ class ModelEx():
             input_timesteps = layer['input_timesteps'] if 'input_timesteps' in layer else None
             input_dim = layer['input_dim'] if 'input_dim' in layer else None
 
-            if layer['type'] == 'dense':
-                self.model.add(Dense(neurons, activation=activation))
             if layer['type'] == 'lstm':
                 self.model.add(LSTM(neurons, input_shape=(input_timesteps, input_dim), return_sequences=return_seq))
             if layer['type'] == 'dropout':
                 self.model.add(Dropout(dropout_rate))
+            if layer['type'] == 'dense':
+                self.model.add(Dense(neurons, activation=activation))
 
-        self.model.compile(loss=configs['model']['loss'], optimizer=configs['model']['optimizer'])
+        self.model.compile(loss=configs['model']['loss'], optimizer=configs['model']['optimizer'], metrics=configs['model']['acc'])
 
         print('[Model] Model Compiled')
         timer.stop()  # 输出构建一个模型耗时
 
-        self.model.summary()
-        plot_model(self.model, to_file=ta.g.log_path + 'model.png')
 
-
-def training(code, datafile):
-    m = ModelEx()
-    m.build_model(ta.g.config)  # 根据配置文件新建模型
-
-    evaluation = ta.g.config['data']['evaluation']
+#TODO 训练入口
+def training(code, datafile, modelfile):
+    evaluation = ta.g.config['data']['evaluation'] # 是否评估
     split = ta.g.config['data']['train_test_split']
     if not evaluation:
         split = 1  # 若不评估模型准确度，则将全部历史数据用于训练
 
-    # features_lst = ta.g.config['data']['ohlcv'] + ta.g.config['data']['profit']
     # 从本地加载训练和测试数据
+    features_lst = ta.g.config['data']['ohlcv'] + \
+                   ta.g.config['data']['next'] + \
+                   ta.g.config['data']['avg'] + \
+                   ta.g.config['data']['amp']
+
     data = DataLoaderEx(datafile, split)
-    x_train = my_dm.util.get_features(data.data_train, data.features_lst)
-    x_test = my_dm.util.get_features(data.data_test, data.features_lst)
+    x_train = my_dm.util.get_features(data.data_train, features_lst)
+    x_test = my_dm.util.get_features(data.data_test, features_lst)
 
     y_train = my_dm.util.prepared_y(data.data_train, 'next_rate_10_type', 'onehot')
     y_test = my_dm.util.prepared_y(data.data_test, 'next_rate_10_type', 'onehot')
 
     y_lst = y_train[0]
-    x_lst = data.features_lst
+    x_lst = features_lst
 
     num_in, num_out = len(x_lst), len(y_lst)
 
@@ -288,9 +300,31 @@ def training(code, datafile):
     print('\n self.x_train.shape,', x_train.shape)
     print('\n type(self.x_train),', type(x_train))
 
-    rxn, txn = x_train.shape[0], x_test.shape[0]
-    x_train, x_test = x_train.reshape(rxn, num_in, -1), x_test.reshape(txn, num_in, -1)
+    rxn = x_train.shape[0]
+    x_train = x_train.reshape(rxn, num_in, -1)
+    txn = x_test.shape[0]
+    x_test = x_test.reshape(txn, num_in, -1)
+
     print('\n x_train.shape,', x_train.shape)
     print('\n type(x_train),', type(x_train))
 
     print('\n num_in, num_out:', num_in, num_out)
+
+    # TODO 开始建模
+    m = ModelEx()
+    # m.build_model(ta.g.config)  # 根据配置文件新建模型
+    m.model = zks.lstm020typ(num_in, num_out)
+
+    m.model.summary()
+    plot_model(m.model, to_file = ta.g.log_path + 'model.png')
+
+    print('\n#4 模型训练 fit')
+    tbCallBack = keras.callbacks.TensorBoard(log_dir = ta.g.log_path, write_graph = True, write_images = True)
+    tn0 = arrow.now()
+    m.model.fit(x_train, y_train, epochs = 500, batch_size = 512, callbacks = [tbCallBack])
+    tn = zt.timNSec('', tn0, True)
+
+    m.save_model(modelfile)
+
+    eva_obj = eva.evaluation(data)
+    eva_obj.predict(m.model, data.data_test, x_test)

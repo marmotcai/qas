@@ -39,22 +39,16 @@
 			"open", "high", "low", "close", "volume"
 		],
 		"next": [
-			"pre_close", "next_open", "next_ohlc_avg", "next_price_range", "next_amp", "next_amp_type"
+			"pre_close", "next_open", "next_ohlc_avg", "next_price_range", "next_amp", "next_amp_type", "next_rate_5", "next_rate_10"
 		],
 		"dohlcv": [
 			"date", "open", "high", "low", "close", "volume"
-		],
-        "profit": [
-            "next_profit_1", "next_profit_2", "next_profit_3", "next_profit_4", "next_profit_5", "next_profit_6", "next_profit_7", "next_profit_8", "next_profit_9", "next_profit_10"
-        ],
-		"nextrate": [
-			"next_rate5", "next_rate_10"
 		],
 		"avg": [
 			"ohlc_avg", "dprice_max", "dprice_min", "dprice_avg"
 		],
 		"xavg": [
-			"xavg1", "xavg2", "xavg3", "xavg4", "xavg5", "xavg6", "xavg7", "xavg", "xavg9"
+			"xavg1", "xavg2", "xavg3", "xavg4", "xavg5", "xavg6", "xavg7", "xavg8", "xavg9"
 		],
 		"ma100": [
 			"ma_2", "ma_3", "ma_5", "ma_10", "ma_15", "ma_20", "ma_25", "ma_30", "ma_50", "ma_100"
@@ -62,12 +56,12 @@
 		"amp": [
 			"price_range", "amp", "amp_type"
 		],
-		"columns": [
-			"Close","Open","High","Low"
-		],
+		"profit": [
+            "next_profit_1", "next_profit_2", "next_profit_3", "next_profit_4", "next_profit_5", "next_profit_6", "next_profit_7", "next_profit_8", "next_profit_9", "next_profit_10"
+        ],
 		"evaluation": true,
 		"sequence_length": 30,
-		"train_test_split": 0.98,
+		"train_test_split": 0.80,
 		"normalise": false
 	},
 	"training": {
@@ -75,16 +69,16 @@
 		"batch_size": 8
 	},
 	"model": {
-		"type": "rate",
-		"loss": "mse",
+		"acc": ["acc"],
+		"loss": "categorical_crossentropy",
 		"optimizer": "adam",
 		"save_dir": "saved_models",
 		"layers": [
 			{
 				"type": "lstm",
-				"neurons": 100,
-				"input_timesteps": 29,
-				"input_dim": 5,
+				"neurons": 392,
+				"input_timesteps": 49,
+				"input_dim": 1,
 				"return_seq": true
 			},
 			{
@@ -93,12 +87,7 @@
 			},
 			{
 				"type": "lstm",
-				"neurons": 100,
-				"return_seq": true
-			},
-			{
-				"type": "lstm",
-				"neurons": 100,
+				"neurons": 196,
 				"return_seq": false
 			},
 			{
@@ -107,8 +96,8 @@
 			},
 			{
 				"type": "dense",
-				"neurons": 1,
-				"activation": "linear"
+				"neurons": 3,
+				"activation": "softmax"
 			}
 		]
 	},

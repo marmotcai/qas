@@ -463,7 +463,7 @@ def get_hist_data(code, recent_day=30):  # 获取某股票，指定天数的历�
 def modeling(params):
     type, code, datafile, modfile, lstfile = prepared(params)
 
-    my_modelex.training(code, datafile)
+    my_modelex.training(code, datafile, modfile)
 
 def predict(params):
     type, code, datafile, modfile = prepared(params)
