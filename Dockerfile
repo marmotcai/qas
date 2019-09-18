@@ -24,16 +24,17 @@ RUN if [ "${APP_GITURL}" != "null" ] ; then \
       pip install --no-cache-dir -r $APP_PATH/requirements.txt ; \
     fi
 
-# COPY ./requirements.txt $APP_PATH/requirements.txt ; \
-COPY ./ ${APP_PATH}
+COPY ./requirements.txt $APP_PATH/requirements.txt
+
+RUN pip install -i ${PIP_TSINGHUA_URL} --no-cache-dir -r $APP_PATH/requirements.txt # RUN pip install --no-cache-dir -r ./requirements.txt
+
+# COPY ./ ${APP_PATH}
+# RUN ls -l $APP_PATH/entrypoint.sh
+# RUN chmod +x $APP_PATH/entrypoint.sh # \ sh $APP_PATH/entrypoint.sh init
+
 WORKDIR $APP_PATH
 
-# RUN pip install -i ${PIP_TSINGHUA_URL} --no-cache-dir -r $APP_PATH/requirements.txt
-RUN pip install --no-cache-dir -r ./requirements.txt
-RUN ls -l $APP_PATH/entrypoint.sh
-RUN chmod +x $APP_PATH/entrypoint.sh # \ sh $APP_PATH/entrypoint.sh init
-
 EXPOSE 22 8000
+VOLUME $APP_PATH
 
-CMD ["/usr/sbin/sshd", "-D"]
-# CMD ["./entrypoint.sh", "run"]
+CMD ["/usr/sbin/sshd", "-D"] # CMD ["./entrypoint.sh", "run"]

@@ -30,9 +30,26 @@ case $cmd in
     ;;
 
     run)
-      printf "app path: "$app_path"\n"
+      cpwd=`pwd`
+      # echo ${cpwd}
+
+      docker rm -f my-smb
+      docker run -ti -d --privileged=true \
+               --name my-smb \
+               --publish 445:445 \
+               --publish 137:137 \
+               --publish 138:138 \
+               --publish 139:139 \
+                --volume ${cpwd}:/share \
+               --env workgroup=${2:-workgroup} \
+               marmotcai/smb
+
       docker rm -f my-qas
-      docker run -ti -d -p 3280:8000 -p 3222:22 --name my-qas ${imagename} # python /root/app/manage.py runserver 0.0.0.0:8000
+      docker run -ti -d \
+                 -p 3280:8000 -p 3222:22 \
+                 --name my-qas \
+                 --volume ${cpwd}:/root/app \
+                 ${imagename} # python /root/app/manage.py runserver 0.0.0.0:8000
       exit 0
     ;;
 
