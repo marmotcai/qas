@@ -29,6 +29,6 @@ lxml==4.4.1
 pyfolio==0.9.2
 xlrd==1.2.0
 graphviz==0.12
-
+pydot_ng==2.0.0
 
 

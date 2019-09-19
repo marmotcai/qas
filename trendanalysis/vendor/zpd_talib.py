@@ -120,23 +120,22 @@ mul_talib2x(xfun,df,ksgn='close',vlst=[5,10,15,30,50,100]):
 #
 '''
 
-import sys,os
+import sys, os
 import numpy as np
 import pandas as pd
 
 
-#--------------------------new
+# --------------------------new
 
-def mul_talib(xfun,df,ksgn='close',vlst=[5,10,15,30,50,100]):
+def mul_talib(xfun, df, ksgn='close', vlst=[5, 10, 15, 30, 50, 100]):
     for xd in vlst:
-        df=xfun(df,xd,ksgn)
-        #print(df.head())
+        df = xfun(df, xd, ksgn)
+        # print(df.head())
     return df
 
 
-
-#--------------------------
-#--------------------------new.add
+# --------------------------
+# --------------------------new.add
 def FibPR(df, price='close'):
     """
     Fibonacci Price Retracements 
@@ -145,19 +144,20 @@ def FibPR(df, price='close'):
     p0618 = np.pi - 1
     p0381 = 1 - p0618
     #
-    #p= pd.Series(df[price])
-    df['fib']=df[price]
-    df['fib681']=df[price]*(1+p0618)
-    df['fib-681']=df[price]*(1-p0618)
-    df['fib381']=df[price]*(1+p0381)
-    df['fib-381']=df[price]*(1-p0381)
+    # p= pd.Series(df[price])
+    df['fib'] = df[price]
+    df['fib681'] = df[price] * (1 + p0618)
+    df['fib-681'] = df[price] * (1 - p0618)
+    df['fib381'] = df[price] * (1 + p0381)
+    df['fib-381'] = df[price] * (1 - p0381)
     #
     return df
 
-#--------------------------new.xed
 
-       
-def MA(df, n,ksgn='close'):  
+# --------------------------new.xed
+
+
+def MA(df, n, ksgn='close'):
     '''
     def MA(df, n,ksgn='close'):  
     #Moving Average  
@@ -170,18 +170,18 @@ def MA(df, n,ksgn='close'):
         df, pd.dataframe格式数据源,
         增加了一栏：ma_{n}，均线数据
     '''
-    xnam='ma_{n}'.format(n=n)
-    #ds5 = pd.Series(pd.rolling_mean(df[ksgn], n), name =xnam)  
-    ds2=pd.Series(df[ksgn], name =xnam,index=df.index);
-    ds5 = ds2.rolling(center=False,window=n).mean() 
-    #print(ds5.head()); print(df.head())
+    xnam = 'ma_{n}'.format(n=n)
+    # ds5 = pd.Series(pd.rolling_mean(df[ksgn], n), name =xnam)
+    ds2 = pd.Series(df[ksgn], name=xnam, index=df.index);
+    ds5 = ds2.rolling(center=False, window=n).mean()
+    # print(ds5.head()); print(df.head())
     #
     df = df.join(ds5)
     #
     return df
-   
-   
-def MA01(df, n,ksgn='close'):  
+
+
+def MA01(df, n, ksgn='close'):
     '''
     def MA(df, n,ksgn='close'):  
     #Moving Average  
@@ -194,20 +194,18 @@ def MA01(df, n,ksgn='close'):
         df, pd.dataframe格式数据源,
         增加了一栏：ma_{n}，均线数据
     '''
-    #xnam='ma_{n}'.format(n=n)
-    #xnam='ma'
-    #ds5 = pd.Series(pd.rolling_mean(df[ksgn], n), name =xnam)  
-    ds2=pd.Series(df[ksgn], name =xnam);
-    ds5 = ds2.rolling(center=False,window=n).mean() 
-    #print(ds5.head()); print(df.head())
-    #df = df.join(ds5)  
-    
+    # xnam='ma_{n}'.format(n=n)
+    # xnam='ma'
+    # ds5 = pd.Series(pd.rolling_mean(df[ksgn], n), name =xnam)
+    ds2 = pd.Series(df[ksgn], name=xnam);
+    ds5 = ds2.rolling(center=False, window=n).mean()
+    # print(ds5.head()); print(df.head())
+    # df = df.join(ds5)
+
     return ds5
 
 
-
-
-def PPSR(df):  
+def PPSR(df):
     '''
     def PPSR(df):  					
      支点，支撑线和阻力线.Pivot Points, Supports and Resistances  
@@ -221,23 +219,24 @@ def PPSR(df):
         df, pd.dataframe格式数据源,
         增加了7栏：pp,s1,s2,s3,r1,r2,r3，输出数据
     '''
-    PP = pd.Series((df['high'] + df['low'] + df['close']) / 3)  
-    R1 = pd.Series(2 * PP - df['low'])  
-    S1 = pd.Series(2 * PP - df['high'])  
-    R2 = pd.Series(PP + df['high'] - df['low'])  
-    S2 = pd.Series(PP - df['high'] + df['low'])  
-    R3 = pd.Series(df['high'] + 2 * (PP - df['low']))  
-    S3 = pd.Series(df['low'] - 2 * (df['high'] - PP))  
-    psr = {'pp':PP, 'r1':R1, 's1':S1, 'r2':R2, 's2':S2, 'r3':R3, 's3':S3}  
-    PSR = pd.DataFrame(psr)  
-    df = df.join(PSR)  
-    
+    PP = pd.Series((df['high'] + df['low'] + df['close']) / 3)
+    R1 = pd.Series(2 * PP - df['low'])
+    S1 = pd.Series(2 * PP - df['high'])
+    R2 = pd.Series(PP + df['high'] - df['low'])
+    S2 = pd.Series(PP - df['high'] + df['low'])
+    R3 = pd.Series(df['high'] + 2 * (PP - df['low']))
+    S3 = pd.Series(df['low'] - 2 * (df['high'] - PP))
+    psr = {'pp': PP, 'r1': R1, 's1': S1, 'r2': R2, 's2': S2, 'r3': R3, 's3': S3}
+    PSR = pd.DataFrame(psr)
+    df = df.join(PSR)
+
     return df
 
-#--------------------------old
-    
 
-def ACCDIST(df, n,ksgn='close'): 
+# --------------------------old
+
+
+def ACCDIST(df, n, ksgn='close'):
     '''
     def ACCDIST(df, n,ksgn='close'): 
     #集散指标(A/D)——Accumulation/Distribution
@@ -250,17 +249,17 @@ def ACCDIST(df, n,ksgn='close'):
         df, pd.dataframe格式数据源,
         增加了一栏：ad_{n}，输出数据
     '''
-    xnam='ad_{d}'.format(d=n)
-    ad = (2 * df[ksgn] - df['high'] - df['low']) / (df['high'] - df['low']) * df['volume']  
-    M = ad.diff(n - 1)  
-    N = ad.shift(n - 1)  
-    ROC = M / N  
-    AD = pd.Series(ROC, name = xnam)  #'Acc/Dist_ROC_' + str(n)
-    df = df.join(AD)  
+    xnam = 'ad_{d}'.format(d=n)
+    ad = (2 * df[ksgn] - df['high'] - df['low']) / (df['high'] - df['low']) * df['volume']
+    M = ad.diff(n - 1)
+    N = ad.shift(n - 1)
+    ROC = M / N
+    AD = pd.Series(ROC, name=xnam)  # 'Acc/Dist_ROC_' + str(n)
+    df = df.join(AD)
     return df
 
 
-def ADX(df, n, n_ADX,ksgn='close'):
+def ADX(df, n, n_ADX, ksgn='close'):
     '''
     def ADX(df, n, n_ADX):
     adx，中文全称：平均趋向指数，ADX指数是反映趋向变动的程度，而不是方向的本身
@@ -277,13 +276,13 @@ def ADX(df, n, n_ADX,ksgn='close'):
     i = 0
     UpI = []
     DoI = []
-    xnam='adx_{n}_{n2}'.format(n=n,n2=n_ADX)
+    xnam = 'adx_{n}_{n2}'.format(n=n, n2=n_ADX)
     while i + 1 <= len(df) - 1:  # df.index[-1]:
-        #UpMove = df.get_value(i + 1, 'high') - df.get_value(i, 'high')
-        #DoMove = df.get_value(i, 'low') - df.get_value(i + 1, 'low')
-        #..UpMove=df['high'].iloc[i+1]-df['high'].iloc[i]
-        UpMove = df['high'].iloc[i+1] - df['high'].iloc[i]
-        DoMove = df['low'].iloc[i] - df['low'].iloc[i+1]
+        # UpMove = df.get_value(i + 1, 'high') - df.get_value(i, 'high')
+        # DoMove = df.get_value(i, 'low') - df.get_value(i + 1, 'low')
+        # ..UpMove=df['high'].iloc[i+1]-df['high'].iloc[i]
+        UpMove = df['high'].iloc[i + 1] - df['high'].iloc[i]
+        DoMove = df['low'].iloc[i] - df['low'].iloc[i + 1]
         if UpMove > DoMove and UpMove > 0:
             UpD = UpMove
         else:
@@ -298,8 +297,8 @@ def ADX(df, n, n_ADX,ksgn='close'):
     i = 0
     TR_l = [0]
     while i < len(df) - 1:  # df.index[-1]:
-        #TR = max(df.get_value(i + 1, 'high'), df.get_value(i, 'close')) - min(df.get_value(i + 1, 'low'), df.get_value(i, 'close'))
-        TR = max(df['high'].iloc[i+1], df[ksgn].iloc[i]) - min(df['low'].iloc[i+1], df[ksgn].iloc[i])
+        # TR = max(df.get_value(i + 1, 'high'), df.get_value(i, 'close')) - min(df.get_value(i + 1, 'low'), df.get_value(i, 'close'))
+        TR = max(df['high'].iloc[i + 1], df[ksgn].iloc[i]) - min(df['low'].iloc[i + 1], df[ksgn].iloc[i])
         TR_l.append(TR)
         i = i + 1
     TR_s = pd.Series(TR_l)
@@ -309,12 +308,13 @@ def ADX(df, n, n_ADX,ksgn='close'):
     PosDI = pd.Series(pd.ewma(UpI, span=n, min_periods=n - 1) / ATR)
     NegDI = pd.Series(pd.ewma(DoI, span=n, min_periods=n - 1) / ATR)
     ds = pd.Series(pd.ewma(abs(PosDI - NegDI) / (PosDI + NegDI), span=n_ADX, min_periods=n_ADX - 1), name=xnam)
-    ds.index=df.index;df[xnam]=ds
-    #df = df.join(ds)  
+    ds.index = df.index;
+    df[xnam] = ds
+    # df = df.join(ds)
     return df
 
 
-def ATR(df, n,ksgn='close'):  
+def ATR(df, n, ksgn='close'):
     '''
     def ATR(df, n,ksgn='close'):  
     #ATR,均幅指标（Average True Ranger）,取一定时间周期内的股价波动幅度的移动平均值，主要用于研判买卖时机
@@ -326,27 +326,27 @@ def ATR(df, n,ksgn='close'):
     【输出】    
         df, pd.dataframe格式数据源,
         增加了一栏：atr_{n}，输出数据
-    '''    
-    xnam='atr_{n}'.format(n=n)
+    '''
+    xnam = 'atr_{n}'.format(n=n)
     i = 0
     TR_l = [0]
     while i < len(df) - 1:  # df.index[-1]:
-    # for i, idx in enumerate(df.index)
+        # for i, idx in enumerate(df.index)
         # TR=max(df.get_value(i + 1, 'High'), df.get_value(i, 'Close')) - min(df.get_value(i + 1, 'Low'), df.get_value(i, 'Close'))
-        #TR = max(df['High'].iloc[i + 1], df['Close'].iloc[i] - min(df['Low'].iloc[i + 1], df['Close'].iloc[i]))
+        # TR = max(df['High'].iloc[i + 1], df['Close'].iloc[i] - min(df['Low'].iloc[i + 1], df['Close'].iloc[i]))
         TR = max(df['high'].iloc[i + 1], df[ksgn].iloc[i] - min(df['low'].iloc[i + 1], df[ksgn].iloc[i]))
         TR_l.append(TR)
-        i = i + 1;#print('#',i,TR)
+        i = i + 1;  # print('#',i,TR)
     TR_s = pd.Series(TR_l)
     ds = pd.Series(pd.ewma(TR_s, span=n, min_periods=n), name=xnam)
-    #df = df.join(ds)  
-    ds.index=df.index;df[xnam]=ds
-    #print('ds',ds.head())
+    # df = df.join(ds)
+    ds.index = df.index;
+    df[xnam] = ds
+    # print('ds',ds.head())
     return df
-    
 
 
-def BBANDS(df, n,ksgn='close'):  
+def BBANDS(df, n, ksgn='close'):
     '''
     def BBANDS(df, n,ksgn='close'):  
     布林带.Bollinger Bands  
@@ -357,20 +357,20 @@ def BBANDS(df, n,ksgn='close'):
     【输出】    
         df, pd.dataframe格式数据源,
         增加了2栏：_{n}，_{n}b，输出数据
-    '''    
-    xnam='boll_{n}'.format(n=n)
-    MA = pd.Series(pd.rolling_mean(df[ksgn], n))  
-    MSD = pd.Series(pd.rolling_std(df[ksgn], n))  
-    b1 = 4 * MSD / MA  
-    B1 = pd.Series(b1, name = xnam+'b')  
-    df = df.join(B1)  
-    b2 = (df[ksgn] - MA + 2 * MSD) / (4 * MSD)  
-    B2 = pd.Series(b2, name = xnam)  
-    df = df.join(B2)  
-    return df    
+    '''
+    xnam = 'boll_{n}'.format(n=n)
+    MA = pd.Series(pd.rolling_mean(df[ksgn], n))
+    MSD = pd.Series(pd.rolling_std(df[ksgn], n))
+    b1 = 4 * MSD / MA
+    B1 = pd.Series(b1, name=xnam + 'b')
+    df = df.join(B1)
+    b2 = (df[ksgn] - MA + 2 * MSD) / (4 * MSD)
+    B2 = pd.Series(b2, name=xnam)
+    df = df.join(B2)
+    return df
 
 
-def BBANDS_UpLow(df, n,ksgn='close'):  
+def BBANDS_UpLow(df, n, ksgn='close'):
     '''
     BBANDS_UpLow(df, n,ksgn='close'):  
     zw改进版的布林带talib函数.Bollinger Bands  
@@ -385,21 +385,21 @@ def BBANDS_UpLow(df, n,ksgn='close'):
             boll_std，布林带方差据
             boll_up，布林带上轨带差据
             boll_low，布林带下轨带差据
-    '''        
-    df['boll_ma']=pd.Series(pd.rolling_mean(df[ksgn], n))  
-    df['boll_std']= pd.Series(pd.rolling_std(df[ksgn], n))  
-    #df[#MSD = pd.Series(pd.rolling_std(df[ksgn], n))  
-    MA=df['boll_ma']
-    MSD=df['boll_std']
+    '''
+    df['boll_ma'] = pd.Series(pd.rolling_mean(df[ksgn], n))
+    df['boll_std'] = pd.Series(pd.rolling_std(df[ksgn], n))
+    # df[#MSD = pd.Series(pd.rolling_std(df[ksgn], n))
+    MA = df['boll_ma']
+    MSD = df['boll_std']
     #
-    knum=2
-    df['boll_up']= MA + MSD * knum    #knum=numStdDev
-    df['boll_low']= MA - MSD * knum
+    knum = 2
+    df['boll_up'] = MA + MSD * knum  # knum=numStdDev
+    df['boll_low'] = MA - MSD * knum
 
-    return df 
+    return df
 
 
-def CCI(df, n,ksgn='close'):  
+def CCI(df, n, ksgn='close'):
     '''
     def CCI(df, n,ksgn='close'):  
     CCI顺势指标(Commodity Channel Index)
@@ -415,16 +415,16 @@ def CCI(df, n,ksgn='close'):
         df, pd.dataframe格式数据源,
         增加了一栏：cci_{n}，输出数据
     '''
-    xnam='cci_{d}'.format(d=n)
-    PP = (df['high'] + df['low'] + df[ksgn]) / 3  
-    CCI = pd.Series((PP - pd.rolling_mean(PP, n)) / pd.rolling_std(PP, n), name = xnam)  
-    df = df.join(CCI)  
-    
-    return df
-    
+    xnam = 'cci_{d}'.format(d=n)
+    PP = (df['high'] + df['low'] + df[ksgn]) / 3
+    CCI = pd.Series((PP - pd.rolling_mean(PP, n)) / pd.rolling_std(PP, n), name=xnam)
+    df = df.join(CCI)
 
-#Coppock Curve  
-def COPP(df, n,ksgn='close'):  
+    return df
+
+
+# Coppock Curve
+def COPP(df, n, ksgn='close'):
     '''
     def COPP(df, n):  				
 　　估波指标（Coppock Curve）又称“估波曲线”，通过计算月度价格的变化速率的加权平均值来测量市场的动量，属于长线指标。
@@ -441,19 +441,20 @@ def COPP(df, n,ksgn='close'):
         df, pd.dataframe格式数据源,
         增加了一栏：copp_{n}，输出数据
     '''
-    xnam='copp_{d}'.format(d=n)
-    M = df[ksgn].diff(int(n * 11 / 10) - 1)  
-    N = df[ksgn].shift(int(n * 11 / 10) - 1)  
-    ROC1 = M / N  
-    M = df[ksgn].diff(int(n * 14 / 10) - 1)  
-    N = df[ksgn].shift(int(n * 14 / 10) - 1)  
-    ROC2 = M / N  
-    Copp = pd.Series(pd.ewma(ROC1 + ROC2, span = n, min_periods = n), name = xnam)  
-    df = df.join(Copp)  
+    xnam = 'copp_{d}'.format(d=n)
+    M = df[ksgn].diff(int(n * 11 / 10) - 1)
+    N = df[ksgn].shift(int(n * 11 / 10) - 1)
+    ROC1 = M / N
+    M = df[ksgn].diff(int(n * 14 / 10) - 1)
+    N = df[ksgn].shift(int(n * 14 / 10) - 1)
+    ROC2 = M / N
+    Copp = pd.Series(pd.ewma(ROC1 + ROC2, span=n, min_periods=n), name=xnam)
+    df = df.join(Copp)
     return df
-    
-#Chaikin Oscillator  
-def CHAIKIN(df,ksgn='close'):   
+
+
+# Chaikin Oscillator
+def CHAIKIN(df, ksgn='close'):
     '''
     def CHAIKIN(df):					
     #佳庆指标（Chaikin Oscillator）
@@ -465,15 +466,15 @@ def CHAIKIN(df,ksgn='close'):
         df, pd.dataframe格式数据源,
         增加了一栏：_{n}，输出数据
     '''
-    xnam='ck'
-    ad = (2 * df[ksgn] - df['high'] - df['low']) / (df['high'] - df['low']) * df['volume']  
-    Chaikin = pd.Series(pd.ewma(ad, span = 3, min_periods = 2) - pd.ewma(ad, span = 10, min_periods = 9), name = xnam)  
-    df = df.join(Chaikin)  
+    xnam = 'ck'
+    ad = (2 * df[ksgn] - df['high'] - df['low']) / (df['high'] - df['low']) * df['volume']
+    Chaikin = pd.Series(pd.ewma(ad, span=3, min_periods=2) - pd.ewma(ad, span=10, min_periods=9), name=xnam)
+    df = df.join(Chaikin)
     return df
-    
 
-#Donchian Channel  
-def DONCH(df, n):  
+
+# Donchian Channel
+def DONCH(df, n):
     '''
     def DONCH(df, n):      
       #奇安通道指标,Donchian Channel  
@@ -488,33 +489,32 @@ def DONCH(df, n):
         增加了2栏：donch__{n}sr，中间输出数据
             donch__{n}，输出数据
     '''
-    xnam='donch_{d}'.format(d=n)
-    i = 0  
-    DC_l = []  
-    while i < n - 1:  
-        DC_l.append(0)  
-        i = i + 1  
-    i = 0  
-    while (i + n - 1) <=(len(df) - 1):  #df.index[-1]:  
-        #DC = max(df['high'].ix[i:i + n - 1]) - min(df['low'].ix[i:i + n - 1])  
-        DC = max(df['high'].iloc[i:i + n - 1]) - min(df['low'].iloc[i:i + n - 1])  
-        DC_l.append(DC)  
-        i = i + 1  
+    xnam = 'donch_{d}'.format(d=n)
+    i = 0
+    DC_l = []
+    while i < n - 1:
+        DC_l.append(0)
+        i = i + 1
+    i = 0
+    while (i + n - 1) <= (len(df) - 1):  # df.index[-1]:
+        # DC = max(df['high'].ix[i:i + n - 1]) - min(df['low'].ix[i:i + n - 1])
+        DC = max(df['high'].iloc[i:i + n - 1]) - min(df['low'].iloc[i:i + n - 1])
+        DC_l.append(DC)
+        i = i + 1
+        #
+    # DC_l.append(DC)
     #
-    #DC_l.append(DC)  
-    #
-    DonCh = pd.Series(DC_l, name = xnam)   #'Donchian_' + str(n)
-    
-    #df = df.join(DonCh)  
-    DonCh.index=df.index;
-    df[xnam+'_sr']=DonCh
-    df[xnam]=df[xnam+'_sr'].shift(n - 1)  
-    #DonCh = DonCh.shift(n - 1)  
+    DonCh = pd.Series(DC_l, name=xnam)  # 'Donchian_' + str(n)
+
+    # df = df.join(DonCh)
+    DonCh.index = df.index;
+    df[xnam + '_sr'] = DonCh
+    df[xnam] = df[xnam + '_sr'].shift(n - 1)
+    # DonCh = DonCh.shift(n - 1)
     return df
-    
 
 
-def EMA(df, n,ksgn='close'):  
+def EMA(df, n, ksgn='close'):
     '''
     EMA(df, n,ksgn='close'):  
     #Exponential Moving Average  
@@ -528,15 +528,14 @@ def EMA(df, n,ksgn='close'):
         df, pd.dataframe格式数据源,
         增加了一栏：ema_{n}，输出数据
     '''
-    xnam='ema_{n}'.format(n=n)
-    EMA = pd.Series(pd.ewma(df[ksgn], span = n, min_periods = n - 1), name = xnam)  
-    df = df.join(EMA)  
-    return df    
-   
-    
+    xnam = 'ema_{n}'.format(n=n)
+    EMA = pd.Series(pd.ewma(df[ksgn], span=n, min_periods=n - 1), name=xnam)
+    df = df.join(EMA)
+    return df
 
-#Ease of Movement  
-def EOM(df, n):   
+
+# Ease of Movement
+def EOM(df, n):
     '''
     def EOM(df, n):  					
     简易波动指标(Ease of Movement Value)，又称EMV指标
@@ -553,16 +552,15 @@ def EOM(df, n):
         增加了2栏：eom_{n}，输出数据
             eom_x，10e10倍的输出数据
     '''
-    xnam='eom_{d}'.format(d=n)
-    EoM = (df['high'].diff(1) + df['low'].diff(1)) * (df['high'] - df['low']) / (2 * df['volume'])  
-    Eom_ma = pd.Series(pd.rolling_mean(EoM, n), name = xnam)  
-    df = df.join(Eom_ma)  
-    df['eom_x']=df[xnam]*10e10
+    xnam = 'eom_{d}'.format(d=n)
+    EoM = (df['high'].diff(1) + df['low'].diff(1)) * (df['high'] - df['low']) / (2 * df['volume'])
+    Eom_ma = pd.Series(pd.rolling_mean(EoM, n), name=xnam)
+    df = df.join(Eom_ma)
+    df['eom_x'] = df[xnam] * 10e10
     return df
 
 
-
-def FORCE(df, n,ksgn='close'):   
+def FORCE(df, n, ksgn='close'):
     '''
     def FORCE(df, n):					
     #劲道指数(Force Index)
@@ -578,13 +576,14 @@ def FORCE(df, n,ksgn='close'):
         增加了2栏：force__{n}，输出数据
           force_x，缩小10e7倍的输出数据
     '''
-    xnam='force_{d}'.format(d=n)
-    F = pd.Series(df[ksgn].diff(n) * df['volume'].diff(n), name = xnam)  
-    df = df.join(F)  
-    df['force_x']=df[xnam]/10e7
+    xnam = 'force_{d}'.format(d=n)
+    F = pd.Series(df[ksgn].diff(n) * df['volume'].diff(n), name=xnam)
+    df = df.join(F)
+    df['force_x'] = df[xnam] / 10e7
     return df
 
-def KELCH(df, n,ksgn='close'):
+
+def KELCH(df, n, ksgn='close'):
     '''
     def KELCH(df, n):  				#肯特纳通道（Keltner Channel，KC）
 　　肯特纳通道（KC）是一个移动平均通道，由叁条线组合而成(上通道、中通道及下通道)。
@@ -600,22 +599,22 @@ def KELCH(df, n,ksgn='close'):
             kc_u，up上轨道数据
             kc_d，down下轨道数据
     '''
-    xnam='kc_m'
-    xnam2='kc_u'
-    xnam3='kc_d'
-    KelChM = pd.Series(pd.rolling_mean((df['high'] + df['low'] + df[ksgn]) / 3, n), name = xnam)  #'KelChM_' + str(n)
-    KelChU = pd.Series(pd.rolling_mean((4 * df['high'] - 2 * df['low'] + df[ksgn]) / 3, n), name = xnam2)   #'KelChU_' + str(n)
-    KelChD = pd.Series(pd.rolling_mean((-2 * df['high'] + 4 * df['low'] + df[ksgn]) / 3, n), name =xnam3)    #'KelChD_' + str(n)
-    df = df.join(KelChM)  
-    df = df.join(KelChU)  
-    df = df.join(KelChD)  
-    
+    xnam = 'kc_m'
+    xnam2 = 'kc_u'
+    xnam3 = 'kc_d'
+    KelChM = pd.Series(pd.rolling_mean((df['high'] + df['low'] + df[ksgn]) / 3, n), name=xnam)  # 'KelChM_' + str(n)
+    KelChU = pd.Series(pd.rolling_mean((4 * df['high'] - 2 * df['low'] + df[ksgn]) / 3, n),
+                       name=xnam2)  # 'KelChU_' + str(n)
+    KelChD = pd.Series(pd.rolling_mean((-2 * df['high'] + 4 * df['low'] + df[ksgn]) / 3, n),
+                       name=xnam3)  # 'KelChD_' + str(n)
+    df = df.join(KelChM)
+    df = df.join(KelChU)
+    df = df.join(KelChD)
+
     return df
 
 
-
-
-def KST(df, r1, r2, r3, r4, n1, n2, n3, n4,ksgn='close'): 
+def KST(df, r1, r2, r3, r4, n1, n2, n3, n4, ksgn='close'):
     '''
     def KST(df, r1, r2, r3, r4, n1, n2, n3, n4,ksgn='close'): 
     #KST Oscillator  
@@ -635,25 +634,29 @@ def KST(df, r1, r2, r3, r4, n1, n2, n3, n4,ksgn='close'):
         df, pd.dataframe格式数据源,
         增加了一栏：ksf，输出数据
     '''
-    xnam='kst';
-    M = df[ksgn].diff(r1 - 1)  
-    N = df[ksgn].shift(r1 - 1)  
-    ROC1 = M / N  
-    M = df[ksgn].diff(r2 - 1)  
-    N = df[ksgn].shift(r2 - 1)  
-    ROC2 = M / N  
-    M = df[ksgn].diff(r3 - 1)  
-    N = df[ksgn].shift(r3 - 1)  
-    ROC3 = M / N  
-    M = df[ksgn].diff(r4 - 1)  
-    N = df[ksgn].shift(r4 - 1)  
-    ROC4 = M / N  
-    #'KST_' + str(r1) + '_' + str(r2) + '_' + str(r3) + '_' + str(r4) + '_' + str(n1) + '_' + str(n2) + '_' + str(n3) + '_' + str(n4)
-    KST = pd.Series(pd.rolling_sum(ROC1, n1) + pd.rolling_sum(ROC2, n2) * 2 + pd.rolling_sum(ROC3, n3) * 3 + pd.rolling_sum(ROC4, n4) * 4, name = xnam)  
-    df = df.join(KST)  
+    xnam = 'kst';
+    M = df[ksgn].diff(r1 - 1)
+    N = df[ksgn].shift(r1 - 1)
+    ROC1 = M / N
+    M = df[ksgn].diff(r2 - 1)
+    N = df[ksgn].shift(r2 - 1)
+    ROC2 = M / N
+    M = df[ksgn].diff(r3 - 1)
+    N = df[ksgn].shift(r3 - 1)
+    ROC3 = M / N
+    M = df[ksgn].diff(r4 - 1)
+    N = df[ksgn].shift(r4 - 1)
+    ROC4 = M / N
+    # 'KST_' + str(r1) + '_' + str(r2) + '_' + str(r3) + '_' + str(r4) + '_' + str(n1) + '_' + str(n2) + '_' + str(n3) + '_' + str(n4)
+    KST = pd.Series(
+        pd.rolling_sum(ROC1, n1) + pd.rolling_sum(ROC2, n2) * 2 + pd.rolling_sum(ROC3, n3) * 3 + pd.rolling_sum(ROC4,
+                                                                                                                n4) * 4,
+        name=xnam)
+    df = df.join(KST)
     return df
 
-def KST4(df, r1, r2, r3, r4,ksgn='close'): 
+
+def KST4(df, r1, r2, r3, r4, ksgn='close'):
     '''
     def KST4(df, r1, r2, r3, r4, n1, n2, n3, n4,ksgn='close'): 
     zw修订版，KST确然指标
@@ -672,16 +675,13 @@ def KST4(df, r1, r2, r3, r4,ksgn='close'):
         增加了一栏：ksf，输出数据
     
     '''
-    df=KST(df,r1, r2, r3, r4,r1, r2, r3, r4,ksgn)
-    
+    df = KST(df, r1, r2, r3, r4, r1, r2, r3, r4, ksgn)
+
     return df
 
 
-   
-
-
-#MACD, MACD Signal and MACD difference  
-def MACD(df, n_fast, n_slow,ksgn='close'): 
+# MACD, MACD Signal and MACD difference
+def MACD(df, n_fast, n_slow, ksgn='close'):
     '''
     def MACD(df, n_fast, n_slow):           
       #MACD指标信号和MACD的区别, MACD Signal and MACD difference   
@@ -696,25 +696,25 @@ def MACD(df, n_fast, n_slow,ksgn='close'):
         df, pd.dataframe格式数据源,
         增加了3栏：macd,sign,mdiff
     '''
-    xnam='macd'.format(n=n_fast,n2=n_slow)
-    xnam2='msign'.format(n=n_fast,n2=n_slow)
-    xnam3='mdiff'.format(n=n_fast,n2=n_slow)
-    EMAfast = df[ksgn].ewm(span = n_fast, min_periods = n_slow - 1).mean()
-    EMAslow = df[ksgn].ewm(span = n_slow, min_periods = n_slow - 1).mean()  
-    MACD = pd.Series(EMAfast - EMAslow, name = xnam)  
-    MACDsign = MACD.ewm(span = 9, min_periods = 8).mean()    
-    MACDsign.name=xnam2
-    MACDdiff = pd.Series(MACD - MACDsign, name =xnam3)  
-    df = df.join(MACD)  
-    df = df.join(MACDsign)  
-    df = df.join(MACDdiff)  
+    xnam = 'macd'.format(n=n_fast, n2=n_slow)
+    xnam2 = 'msign'.format(n=n_fast, n2=n_slow)
+    xnam3 = 'mdiff'.format(n=n_fast, n2=n_slow)
+    EMAfast = df[ksgn].ewm(span=n_fast, min_periods=n_slow - 1).mean()
+    EMAslow = df[ksgn].ewm(span=n_slow, min_periods=n_slow - 1).mean()
+    MACD = pd.Series(EMAfast - EMAslow, name=xnam)
+    MACDsign = MACD.ewm(span=9, min_periods=8).mean()
+    MACDsign.name = xnam2
+    MACDdiff = pd.Series(MACD - MACDsign, name=xnam3)
+    df = df.join(MACD)
+    df = df.join(MACDsign)
+    df = df.join(MACDdiff)
     return df
-    
 
-#pd.ewm_mean is deprecated for Series and will be removed in a future version, replace with 
-        #Series.ewm(span=12,min_periods=15,adjust=True,ignore_na=False).mean()
 
-def MFI(df, n,ksgn='close'):   
+# pd.ewm_mean is deprecated for Series and will be removed in a future version, replace with
+# Series.ewm(span=12,min_periods=15,adjust=True,ignore_na=False).mean()
+
+def MFI(df, n, ksgn='close'):
     '''
     def MFI(df, n):					
     MFI,资金流量指标和比率,Money Flow Index and Ratio
@@ -730,30 +730,31 @@ def MFI(df, n,ksgn='close'):
         df, pd.dataframe格式数据源,
         增加了一栏：mfi_{n}，输出数据
     '''
-    xnam='mfi_{d}'.format(d=n)
-    PP = (df['high'] + df['low'] + df[ksgn]) / 3  
-    i = 0  
-    PosMF = [0]  
-    while i <(len(df) - 1): #df.index[-1]:  
-        if PP.iloc[i + 1] > PP.iloc[i]:  
-            #PosMF.append(PP[i + 1] * df.get_value(i + 1, 'volume'))  
-            PosMF.append(PP.iloc[i + 1] * df['volume'].iloc[i + 1])  
-        else:  
-            PosMF.append(0)  
-        i = i + 1  
-    #    
-    PosMF = pd.Series(PosMF)  
-    TotMF = PP * df['volume']  
-    #MFR = pd.Series(PosMF / TotMF)  
-    PosMF.index=TotMF.index
-    MFR =PosMF / TotMF
-    MFI = pd.Series(pd.rolling_mean(MFR, n), name = xnam)  
-    #df = df.join(MFI)  
-    #MFI.index=df.index;
-    df[xnam]=MFI
+    xnam = 'mfi_{d}'.format(d=n)
+    PP = (df['high'] + df['low'] + df[ksgn]) / 3
+    i = 0
+    PosMF = [0]
+    while i < (len(df) - 1):  # df.index[-1]:
+        if PP.iloc[i + 1] > PP.iloc[i]:
+            # PosMF.append(PP[i + 1] * df.get_value(i + 1, 'volume'))
+            PosMF.append(PP.iloc[i + 1] * df['volume'].iloc[i + 1])
+        else:
+            PosMF.append(0)
+        i = i + 1
+        #
+    PosMF = pd.Series(PosMF)
+    TotMF = PP * df['volume']
+    # MFR = pd.Series(PosMF / TotMF)
+    PosMF.index = TotMF.index
+    MFR = PosMF / TotMF
+    MFI = pd.Series(pd.rolling_mean(MFR, n), name=xnam)
+    # df = df.join(MFI)
+    # MFI.index=df.index;
+    df[xnam] = MFI
     return df
-    
-def MOM(df, n,ksgn='close'):  
+
+
+def MOM(df, n, ksgn='close'):
     '''
     
     def MOM(df, n,ksgn='close'):  
@@ -769,16 +770,14 @@ def MOM(df, n,ksgn='close'):
         df, pd.dataframe格式数据源,
         增加了一栏：mom_{n}，输出数据
     '''
-    xnam='mom_{n}'.format(n=n)
-    #M = pd.Series(df['close'].diff(n), name = 'Momentum_' + str(n))  
-    M = pd.Series(df[ksgn].diff(n), name = xnam)  
-    df = df.join(M)  
+    xnam = 'mom_{n}'.format(n=n)
+    # M = pd.Series(df['close'].diff(n), name = 'Momentum_' + str(n))
+    M = pd.Series(df[ksgn].diff(n), name=xnam)
+    df = df.join(M)
     return df
-    
 
 
-
-def MASS(df):  
+def MASS(df):
     '''
     def MassI(df):					
     梅斯线（Mass Index）
@@ -793,19 +792,17 @@ def MASS(df):
         df, pd.dataframe格式数据源,
         增加了一栏：mass，输出数据
     '''
-    xnam='mass'
-    Range = df['high'] - df['low']  
-    EX1 = pd.ewma(Range, span = 9, min_periods = 8)  
-    EX2 = pd.ewma(EX1, span = 9, min_periods = 8)  
-    Mass = EX1 / EX2  
-    MassI = pd.Series(pd.rolling_sum(Mass, 25), name = xnam)  #'Mass Index'
-    df = df.join(MassI)  
-    return df    
-    
+    xnam = 'mass'
+    Range = df['high'] - df['low']
+    EX1 = pd.ewma(Range, span=9, min_periods=8)
+    EX2 = pd.ewma(EX1, span=9, min_periods=8)
+    Mass = EX1 / EX2
+    MassI = pd.Series(pd.rolling_sum(Mass, 25), name=xnam)  # 'Mass Index'
+    df = df.join(MassI)
+    return df
 
 
-
-def OBV(df, n,ksgn='close'):   
+def OBV(df, n, ksgn='close'):
     '''
     def OBV(df, n,ksgn='close'):   
     #能量潮指标（On Balance Volume，OBV）
@@ -822,34 +819,29 @@ def OBV(df, n,ksgn='close'):
         增加了2栏：obv_{n}，输出数据
         obv_x，放大10e6倍的输出数据
     '''
-    xnam='obv_{d}'.format(d=n)
-    i = 0  
-    OBV = [0]  
-    while i <  len(df) - 1:  #df.index[-1]
-        #if df.get_value(i + 1, ksgn) - df.get_value(i, ksgn) > 0:  
-        if df[ksgn].iloc[i+1]-df[ksgn].iloc[i] > 0:  
-            #OBV.append(df.get_value(i + 1, 'Volume'))  
-            OBV.append(df['volume'].iloc[i + 1])  
-        if (df[ksgn].iloc[i+1]-df[ksgn].iloc[i]) == 0:  
-            OBV.append(0)  
-        if (df[ksgn].iloc[i+1]-df[ksgn].iloc[i]) < 0:  
-            OBV.append(-df['volume'].iloc[i + 1])  
-        i = i + 1  
-    OBV = pd.Series(OBV)  
-    OBV_ma = pd.Series(pd.rolling_mean(OBV, n), name = xnam)  
-    #df = df.join(OBV_ma)  
-    OBV_ma.index=df.index;
-    df[xnam]=OBV_ma
-    df['obv_x']=df[xnam]/10e6
+    xnam = 'obv_{d}'.format(d=n)
+    i = 0
+    OBV = [0]
+    while i < len(df) - 1:  # df.index[-1]
+        # if df.get_value(i + 1, ksgn) - df.get_value(i, ksgn) > 0:
+        if df[ksgn].iloc[i + 1] - df[ksgn].iloc[i] > 0:
+            # OBV.append(df.get_value(i + 1, 'Volume'))
+            OBV.append(df['volume'].iloc[i + 1])
+        if (df[ksgn].iloc[i + 1] - df[ksgn].iloc[i]) == 0:
+            OBV.append(0)
+        if (df[ksgn].iloc[i + 1] - df[ksgn].iloc[i]) < 0:
+            OBV.append(-df['volume'].iloc[i + 1])
+        i = i + 1
+    OBV = pd.Series(OBV)
+    OBV_ma = pd.Series(pd.rolling_mean(OBV, n), name=xnam)
+    # df = df.join(OBV_ma)
+    OBV_ma.index = df.index;
+    df[xnam] = OBV_ma
+    df['obv_x'] = df[xnam] / 10e6
     return df
-    
-    
-
-    
 
 
-def ROC(df, n,ksgn='close'):  
-
+def ROC(df, n, ksgn='close'):
     '''
     def ROC(df, n,ksgn='close'):  
     变动率(Rate of change,ROC)
@@ -864,14 +856,12 @@ def ROC(df, n,ksgn='close'):
         df, pd.dataframe格式数据源,
         增加了一栏：_{n}，输出数据
     '''
-    xnam='roc_{n}'.format(n=n)
-    M = df[ksgn].diff(n - 1)  
-    N = df[ksgn].shift(n - 1)  
-    ROC = pd.Series(M / N, name = xnam)  
-    df = df.join(ROC)  
+    xnam = 'roc_{n}'.format(n=n)
+    M = df[ksgn].diff(n - 1)
+    N = df[ksgn].shift(n - 1)
+    ROC = pd.Series(M / N, name=xnam)
+    df = df.join(ROC)
     return df
-
-
 
 
 def RSI(df, n):
@@ -889,18 +879,18 @@ def RSI(df, n):
         df, pd.dataframe格式数据源,
         增加了一栏：rsi_{n}，输出数据
     '''
-    xnam='rsi_{n}'.format(n=n)
-    print( xnam)
+    xnam = 'rsi_{n}'.format(n=n)
+    print(xnam)
     i = 0
     UpI = [0]
     DoI = [0]
     while i + 1 <= len(df) - 1:  # df.index[-1]
-        #UpMove = df.get_value(i + 1, 'high') - df.get_value(i, 'high')
-        #DoMove = df.get_value(i, 'low') - df.get_value(i + 1, 'low')
-        UpMove=df['high'].iloc[i+1]-df['high'].iloc[i]
-        DoMove=df['low'].iloc[i]-df['low'].iloc[i+1]
+        # UpMove = df.get_value(i + 1, 'high') - df.get_value(i, 'high')
+        # DoMove = df.get_value(i, 'low') - df.get_value(i + 1, 'low')
+        UpMove = df['high'].iloc[i + 1] - df['high'].iloc[i]
+        DoMove = df['low'].iloc[i] - df['low'].iloc[i + 1]
 
-        #Range=abs(df['high'].iloc[i+1]-df['low'].iloc[i])-abs(df['low'].iloc[i+1]-df['high'].iloc[i])
+        # Range=abs(df['high'].iloc[i+1]-df['low'].iloc[i])-abs(df['low'].iloc[i+1]-df['high'].iloc[i])
         if UpMove > DoMove and UpMove > 0:
             UpD = UpMove
         else:
@@ -917,17 +907,15 @@ def RSI(df, n):
     PosDI = pd.Series(pd.ewma(UpI, span=n, min_periods=n - 1))
     NegDI = pd.Series(pd.ewma(DoI, span=n, min_periods=n - 1))
     ds = pd.Series(PosDI / (PosDI + NegDI), name=xnam)
-    #df = df.join(ds)
-    #print('rsi')
-    #print(len(ds),len(df))
-    ds.index=df.index
-    df[xnam]=ds*100
+    # df = df.join(ds)
+    # print('rsi')
+    # print(len(ds),len(df))
+    ds.index = df.index
+    df[xnam] = ds * 100
     return df
 
 
-
 def RSI100(df, n):
-
     '''
     def RSI100(df, n):
         zw版RSI相对强弱指数，取0..100之间的数值
@@ -941,18 +929,18 @@ def RSI100(df, n):
         df, pd.dataframe格式数据源,
         增加了2栏：rsi_{n}，输出数据
           rsi_k，中间输出数据
-    '''    
-    xnam='rsi_{n}'.format(n=n)
+    '''
+    xnam = 'rsi_{n}'.format(n=n)
     i = 0
     UpI = [0]
     DoI = [0]
     while i + 1 <= len(df) - 1:  # df.index[-1]
-        #UpMove = df.get_value(i + 1, 'high') - df.get_value(i, 'high')
-        #DoMove = df.get_value(i, 'low') - df.get_value(i + 1, 'low')
-        UpMove=df['high'].iloc[i+1]-df['high'].iloc[i];
-        DoMove=df['low'].iloc[i]-df['low'].iloc[i+1];
-        
-        #Range=abs(df['high'].iloc[i+1]-df['low'].iloc[i])-abs(df['low'].iloc[i+1]-df['high'].iloc[i])
+        # UpMove = df.get_value(i + 1, 'high') - df.get_value(i, 'high')
+        # DoMove = df.get_value(i, 'low') - df.get_value(i + 1, 'low')
+        UpMove = df['high'].iloc[i + 1] - df['high'].iloc[i];
+        DoMove = df['low'].iloc[i] - df['low'].iloc[i + 1];
+
+        # Range=abs(df['high'].iloc[i+1]-df['low'].iloc[i])-abs(df['low'].iloc[i+1]-df['high'].iloc[i])
         if UpMove > DoMove and UpMove > 0:
             UpD = UpMove
         else:
@@ -968,20 +956,19 @@ def RSI100(df, n):
     DoI = pd.Series(DoI)
     PosDI = pd.Series(pd.ewma(UpI, span=n, min_periods=n - 1))
     NegDI = pd.Series(pd.ewma(DoI, span=n, min_periods=n - 1))
-    #ds = pd.Series(PosDI / (PosDI + NegDI))
+    # ds = pd.Series(PosDI / (PosDI + NegDI))
     ds = pd.Series(PosDI / (PosDI + NegDI))
-    ds.index=df.index
-    #print(ds.tail())
-    #df = df.join(ds)  
-    #df[xnam]=ds;
-    df['rsi_k']=ds;
-    df[xnam]=100-100/(1+df['rsi_k']);
-    
+    ds.index = df.index
+    # print(ds.tail())
+    # df = df.join(ds)
+    # df[xnam]=ds;
+    df['rsi_k'] = ds;
+    df[xnam] = 100 - 100 / (1 + df['rsi_k']);
+
     return df
-    
 
 
-def STDDEV(df, n,ksgn='close'):
+def STDDEV(df, n, ksgn='close'):
     '''
     def STDDEV(df, n,ksgn='close'):
     #标准偏差,#Standard Deviation
@@ -993,13 +980,12 @@ def STDDEV(df, n,ksgn='close'):
         df, pd.dataframe格式数据源,
         增加了一栏：std_{n}，输出数据
     '''
-    xnam='std_{d}'.format(d=n)
-    df = df.join(pd.Series(pd.rolling_std(df[ksgn], n), name =xnam))  
-    return df      
-    
-    
+    xnam = 'std_{d}'.format(d=n)
+    df = df.join(pd.Series(pd.rolling_std(df[ksgn], n), name=xnam))
+    return df
 
-def STOD(df, n,ksgn='close'):    
+
+def STOD(df, n, ksgn='close'):
     '''
     def STO(df, n,ksgn='close'):     
        随机指标D值,Stochastic oscillator %D  
@@ -1018,19 +1004,19 @@ def STOD(df, n,ksgn='close'):
         df, pd.dataframe格式数据源,
         增加了一栏：_{n}，输出数据
     '''
-    #xnam='stod'
-    xnam='stod'
-    SOk = pd.Series((df[ksgn] - df['low']) / (df['high'] - df['low']), name = 'stok')
-    SOd = pd.Series(pd.ewma(SOk, span = n, min_periods = n - 1), name = xnam)
-    df = df.join(SOk) 
-    df = df.join(SOd) 
-    df['stod']=df['stod']*100
-    df['stok']=df['stok']*100
-    #print('n df',len(df))
+    # xnam='stod'
+    xnam = 'stod'
+    SOk = pd.Series((df[ksgn] - df['low']) / (df['high'] - df['low']), name='stok')
+    SOd = pd.Series(pd.ewma(SOk, span=n, min_periods=n - 1), name=xnam)
+    df = df.join(SOk)
+    df = df.join(SOd)
+    df['stod'] = df['stod'] * 100
+    df['stok'] = df['stok'] * 100
+    # print('n df',len(df))
     return df
 
 
-def STOK(df,ksgn='close'):  
+def STOK(df, ksgn='close'):
     '''
     def STOK(df,ksgn='close'):  
     随机指标K值,Stochastic oscillator %K
@@ -1047,14 +1033,13 @@ def STOK(df,ksgn='close'):
         df, pd.dataframe格式数据源,
         增加了一栏：_{n}，输出数据
     '''
-    xnam='stok'
-    SOk = pd.Series((df[ksgn] - df['low']) / (df['high'] - df['low']), name =xnam)  
-    df = df.join(SOk)  
+    xnam = 'stok'
+    SOk = pd.Series((df[ksgn] - df['low']) / (df['high'] - df['low']), name=xnam)
+    df = df.join(SOk)
     return df
 
 
-
-def TRIX(df, n,ksgn='close'): 
+def TRIX(df, n, ksgn='close'):
     '''
     def TRIX(df, n,ksgn='close'): 
     
@@ -1066,7 +1051,7 @@ def TRIX(df, n,ksgn='close'):
         df, pd.dataframe格式数据源,
         增加了一栏：trix_{n}，输出数据
     '''
-    xnam='trix_{n}'.format(n=n)
+    xnam = 'trix_{n}'.format(n=n)
     EX1 = pd.ewma(df[ksgn], span=n, min_periods=n - 1)
     EX2 = pd.ewma(EX1, span=n, min_periods=n - 1)
     EX3 = pd.ewma(EX2, span=n, min_periods=n - 1)
@@ -1076,19 +1061,17 @@ def TRIX(df, n,ksgn='close'):
         ROC = (EX3[i + 1] - EX3[i]) / EX3[i]
         ROC_l.append(ROC)
         i = i + 1
-    trix  = pd.Series(ROC_l, name=xnam)
-    #df = df.join(trix)     
-    trix.index=df.index;
-    df[xnam]=trix
-     
-    #print(trix.tail())
-    #print('n',len(df))
+    trix = pd.Series(ROC_l, name=xnam)
+    # df = df.join(trix)
+    trix.index = df.index;
+    df[xnam] = trix
+
+    # print(trix.tail())
+    # print('n',len(df))
     return df
-    
 
 
-def TSI(df, r, s,ksgn='close'):   
-    
+def TSI(df, r, s, ksgn='close'):
     '''
     def TSI(df, r, s,ksgn='close'):   
     TSI，真实强度指数,True Strength Index
@@ -1103,24 +1086,21 @@ def TSI(df, r, s,ksgn='close'):
         df, pd.dataframe格式数据源,
         增加了一栏：tsi，输出数据
     '''
-    xnam='tsi'.format(d=r,d2=s)
-    M = pd.Series(df[ksgn].diff(1))  
-    aM = abs(M)  
-    EMA1 = pd.Series(pd.ewma(M, span = r, min_periods = r - 1))  
-    aEMA1 = pd.Series(pd.ewma(aM, span = r, min_periods = r - 1))  
-    EMA2 = pd.Series(pd.ewma(EMA1, span = s, min_periods = s - 1))  
-    aEMA2 = pd.Series(pd.ewma(aEMA1, span = s, min_periods = s - 1))  
-    TSI = pd.Series(EMA2 / aEMA2, name = xnam)  
-    df = df.join(TSI)  
-    
+    xnam = 'tsi'.format(d=r, d2=s)
+    M = pd.Series(df[ksgn].diff(1))
+    aM = abs(M)
+    EMA1 = pd.Series(pd.ewma(M, span=r, min_periods=r - 1))
+    aEMA1 = pd.Series(pd.ewma(aM, span=r, min_periods=r - 1))
+    EMA2 = pd.Series(pd.ewma(EMA1, span=s, min_periods=s - 1))
+    aEMA2 = pd.Series(pd.ewma(aEMA1, span=s, min_periods=s - 1))
+    TSI = pd.Series(EMA2 / aEMA2, name=xnam)
+    df = df.join(TSI)
+
     return df
 
 
-
-
-
-#Ultimate Oscillator  
-def ULTOSC(df,ksgn='close'):
+# Ultimate Oscillator
+def ULTOSC(df, ksgn='close'):
     '''
     def ULTOSC(df,ksgn='close'):
     UOS，终极指标（Ultimate Oscillator，UOS）
@@ -1136,22 +1116,25 @@ def ULTOSC(df,ksgn='close'):
         df, pd.dataframe格式数据源,
         增加了一栏：uos，输出数据
     '''
-    i = 0  
-    TR_l = [0]  
-    BP_l = [0]  
-    xnam='uos'
-    while i <  len(df) - 1:   #df.index[-1]:  
-        #TR = max(df.get_value(i + 1, 'high'), df.get_value(i, 'close')) - min(df.get_value(i + 1, 'low'), df.get_value(i, 'close'))  
-        TR = max(df['high'].iloc[i+1],df[ksgn].iloc[i])-min(df['low'].iloc[i+1],df[ksgn].iloc[i])  
-        TR_l.append(TR)  
-        #BP = df.get_value(i + 1, 'close') - min(df.get_value(i + 1, 'low'), df.get_value(i, 'close'))  
-        BP =df[ksgn].iloc[i+1]-min(df['low'].iloc[i+1], df[ksgn].iloc[i])  
-        BP_l.append(BP)  
-        i = i + 1  
-    UltO = pd.Series((4 * pd.rolling_sum(pd.Series(BP_l), 7) / pd.rolling_sum(pd.Series(TR_l), 7)) + (2 * pd.rolling_sum(pd.Series(BP_l), 14) / pd.rolling_sum(pd.Series(TR_l), 14)) + (pd.rolling_sum(pd.Series(BP_l), 28) / pd.rolling_sum(pd.Series(TR_l), 28)), name =xnam)  # 'Ultimate_Osc'
-    #df = df.join(UltO)      
-    UltO.index=df.index;
-    df[xnam]=UltO
+    i = 0
+    TR_l = [0]
+    BP_l = [0]
+    xnam = 'uos'
+    while i < len(df) - 1:  # df.index[-1]:
+        # TR = max(df.get_value(i + 1, 'high'), df.get_value(i, 'close')) - min(df.get_value(i + 1, 'low'), df.get_value(i, 'close'))
+        TR = max(df['high'].iloc[i + 1], df[ksgn].iloc[i]) - min(df['low'].iloc[i + 1], df[ksgn].iloc[i])
+        TR_l.append(TR)
+        # BP = df.get_value(i + 1, 'close') - min(df.get_value(i + 1, 'low'), df.get_value(i, 'close'))
+        BP = df[ksgn].iloc[i + 1] - min(df['low'].iloc[i + 1], df[ksgn].iloc[i])
+        BP_l.append(BP)
+        i = i + 1
+    UltO = pd.Series((4 * pd.rolling_sum(pd.Series(BP_l), 7) / pd.rolling_sum(pd.Series(TR_l), 7)) + (
+                2 * pd.rolling_sum(pd.Series(BP_l), 14) / pd.rolling_sum(pd.Series(TR_l), 14)) + (
+                                 pd.rolling_sum(pd.Series(BP_l), 28) / pd.rolling_sum(pd.Series(TR_l), 28)),
+                     name=xnam)  # 'Ultimate_Osc'
+    # df = df.join(UltO)
+    UltO.index = df.index;
+    df[xnam] = UltO
     return df
 
 
@@ -1171,33 +1154,27 @@ def VORTEX(df, n):
         df, pd.dataframe格式数据源,
         增加了一栏：vortex__{n}，输出数据
     '''
-    xnam='vortex_{n}'.format(n=n)
+    xnam = 'vortex_{n}'.format(n=n)
     i = 0
     TR = [0]
     while i < len(df) - 1:  # df.index[-1]:
-        #Range = max(df.get_value(i + 1, 'high'), df.get_value(i, 'close')) - min(df.get_value(i + 1, 'low'), df.get_value(i, 'close'))
-        Range=max(df['high'].iloc[i+1],df['close'].iloc[i])-min(df['low'].iloc[i+1],df['close'].iloc[i])
-        #TR = max(df['High'].iloc[i + 1], df['Close'].iloc[i] - min(df['Low'].iloc[i + 1], df['Close'].iloc[i]))
+        # Range = max(df.get_value(i + 1, 'high'), df.get_value(i, 'close')) - min(df.get_value(i + 1, 'low'), df.get_value(i, 'close'))
+        Range = max(df['high'].iloc[i + 1], df['close'].iloc[i]) - min(df['low'].iloc[i + 1], df['close'].iloc[i])
+        # TR = max(df['High'].iloc[i + 1], df['Close'].iloc[i] - min(df['Low'].iloc[i + 1], df['Close'].iloc[i]))
         TR.append(Range)
         i = i + 1
     i = 0
     VM = [0]
     while i < len(df) - 1:  # df.index[-1]:
-        #Range = abs(df.get_value(i + 1, 'high') - df.get_value(i, 'low')) - abs(df.get_value(i + 1, 'low') - df.get_value(i, 'high'))
-        Range=abs(df['high'].iloc[i+1]-df['low'].iloc[i])-abs(df['low'].iloc[i+1]-df['high'].iloc[i])
+        # Range = abs(df.get_value(i + 1, 'high') - df.get_value(i, 'low')) - abs(df.get_value(i + 1, 'low') - df.get_value(i, 'high'))
+        Range = abs(df['high'].iloc[i + 1] - df['low'].iloc[i]) - abs(df['low'].iloc[i + 1] - df['high'].iloc[i])
         VM.append(Range)
         i = i + 1
     ds = pd.Series(pd.rolling_sum(pd.Series(VM), n) / pd.rolling_sum(pd.Series(TR), n), name=xnam)
-    #df = df.join(ds)  
-    ds.index=df.index;
-    df[xnam]=ds
-    
+    # df = df.join(ds)
+    ds.index = df.index;
+    df[xnam] = ds
+
     return df
 
-
-
-
-    
-#=========================================
-
-
+# =========================================

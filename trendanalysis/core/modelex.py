@@ -8,15 +8,15 @@ import keras
 from keras.models import Sequential, load_model
 from keras.layers import Dense, Dropout, LSTM
 from keras.utils import plot_model
+import pydot_ng as pydot
+
+print(pydot.find_graphviz())
 
 from trendanalysis.utils.tools import Timer
 from trendanalysis.core import data_manager as my_dm
 
 import trendanalysis as ta
-from trendanalysis.vendor import zsys
 from trendanalysis.vendor import ztools as zt
-from trendanalysis.vendor import zpd_talib as zta
-from trendanalysis.vendor import ztools_data as zdat
 from trendanalysis.utils import tools as my_tools
 from trendanalysis.core import evaluation as eva
 from trendanalysis.vendor import zai_keras as zks
@@ -27,6 +27,42 @@ class DataPrepared():
         pd.set_option('display.width', 450)
         pd.set_option('display.float_format', zt.xfloat3)
 
+    def prepared(df, featureslist):
+        x_columns = []
+        df = df.sort_values('date')  # 日期排序
+
+        for features in featureslist:
+            if features == 'ohlcv':
+                for i in ta.g.config["data"]["ohlcv"]:
+                    x_columns.append(i)
+
+            if features == 'avg':
+                df, columns = DataPrepared.prepared_avg(df)  # 填充均值
+                for i in columns: x_columns.append(i)
+
+            if features == 'ma':
+                df, columns = DataPrepared.prepared_ma(df)  # 填充MA均线
+                for i in columns: x_columns.append(i)
+
+            if features == 'pre_next':
+                df, columns = DataPrepared.prepared_pre_next(df)  # 前一天收盘价和后一天的开盘价
+                for i in columns: x_columns.append(i)
+
+            if features == 'next_profit':
+                df, columns = DataPrepared.prepared_next_profit(df, 5, 2, 5)  # 计算第5天到第10天的收益值，从第5天开始，计算2次，步长为5天
+                for i in columns: x_columns.append(i)
+
+            if features == 'next_rate':
+                df, columns = DataPrepared.prepared_next_rate(df, 5, 2, 5)  # 计算第5天和第10天的收益率，从第5天开始，计算2次，步长为5天
+                for i in columns: x_columns.append(i)
+
+            if features == 'amp':
+                df, columns = DataPrepared.prepared_amp(df)  # 填充最大振幅
+                for i in columns: x_columns.append(i)
+
+        df = DataPrepared.prepared_other(df)  # 填充其它swi
+        return df, x_columns
+
     def get_onehot(df, k):
         return pd.get_dummies(df[k]).values
 
@@ -35,55 +71,102 @@ class DataPrepared():
 
     # 填充前一天和后一天的值
     def prepared_pre_next(df):
+        columns = []
         df['next_open'] = df['open'].shift(-1)  # 后一天的开盘价
+        columns.append('next_open')
         df['pre_close'] = df['close'].shift(1)  # 前一天收盘价
-        return df
+        columns.append('pre_close')
+        return df, columns
 
     # 计算均值
     def prepared_avg(df):
+        columns = []
+
         ohlc = ta.g.config['data']['ohlc']
+
         df['ohlc_avg'] = df[ohlc].mean(axis=1).round(2)  # 当天OHLC均值
-        df['dprice_max'] = df['ohlc_avg'].rolling(10).max()
-        df['dprice_min'] = df['ohlc_avg'].rolling(10).min()
-        df['dprice_avg'] = df['ohlc_avg'].rolling(10).mean()
-        df = zdat.df_xed_nextDay(df, ksgn='ohlc_avg', newSgn='xavg', nday=10)  # 10日均值
-        return df
+        columns.append('ohlc_avg')
+        df['ohlc10_max'] = df['ohlc_avg'].rolling(10).max()
+        columns.append('ohlc10_max')
+        df['ohlc10_min'] = df['ohlc_avg'].rolling(10).min()
+        columns.append('ohlc10_min')
+        df['ohlc10_avg'] = df['ohlc_avg'].rolling(10).mean()
+        columns.append('ohlc10_avg')
+        df['next_ohlc_avg'] = df['ohlc_avg'].shift(-1)
+        columns.append('next_ohlc_avg')
+
+        for i in range(-5, 5):
+            ksgn = 'ohlc_avg_' + str(i)
+            columns.append(ksgn)
+            df[ksgn] = df['ohlc_avg'].shift(-i)
+
+        df = DataPrepared.prepared_clean(df)  # 删除有空值的行
+
+        return df, columns
+
+    def ma(df, n, ksgn='close'):
+        xnam = 'ma_{n}'.format(n=n)
+        ds2 = pd.Series(df[ksgn], name=xnam, index=df.index);
+        ds5 = ds2.rolling(center=False, window=n).mean()
+        df = df.join(ds5)
+        return df, xnam
 
     # 计算MA均线
     def prepared_ma(df):
-        return zta.mul_talib(zta.MA, df, ksgn='ohlc_avg', vlst=zsys.ma100Lst_var)  # ma
+        columns = []
+        vlst = ta.g.config["data"]["ma100"]
+        for xd in vlst:
+            df, xnam = DataPrepared.ma(df, xd, 'ohlc_avg')
+            columns.append(xnam)
+        return df, columns
 
     # 计算振幅
     def prepared_amp(df):
+        columns = []
+
         df['price_range'] = df['high'].sub(df['low'])  # 当天振幅
+        columns.append('price_range')
+        df['next_price_range'] = df['price_range'].shift(-1)
+        columns.append('next_price_range')
+
         df['amp'] = df['price_range'].div(df['pre_close'])  # 当天振幅
+        columns.append('amp')
         df['amp_type'] = df['amp'].apply(zt.iff3type, d0=0.03, d9=0.05, v3=3, v2=2, v1=1)  # 振幅分类器
-        return df
+        columns.append('amp_type')
+        df['next_amp'] = df['amp'].shift(-1)
+        columns.append('next_amp')
+        df['next_amp_type'] = df['amp_type'].shift(-1)
+        columns.append('next_amp_type')
+
+        return df, columns
 
     def prepared_next_profit(df, num=5, count=2, step=5):
+        columns = []
         for i in range(count):
             j = num + i * step
-            keyname_profit = 'next_profit_' + str(j)
-            df[keyname_profit] = df['close'].shift(-1 * (j)).sub(df['close'])
-        return df
+            ksgn = 'next_profit_' + str(j)
+            df[ksgn] = df['close'].shift(-1 * (j)).sub(df['close'])
+            columns.append(ksgn)
+        return df, columns
 
     def prepared_next_rate(df, num=5, count=2, step=5):
+        columns = []
         for i in range(count):
             j = num + i * step
-            keyname_profit = 'next_profit_' + str(j)
-            keyname_rate = 'next_rate_' + str(j)
-            df[keyname_profit] = df['close'].shift(-1 * (j)).sub(df['close'])
-            df[keyname_rate] = df[keyname_profit].div(df['close'])
-        df['next_rate_10_type'] = df['next_rate_10'].apply(zt.iff3type, d0=0, d9=0.05, v3=3, v2=2, v1=1)  # 振幅分类器
-        return df
 
-    # 次日数据
-    def prepared_next(df):
-        df['next_ohlc_avg'] = df['ohlc_avg'].shift(-1)
-        df['next_price_range'] = df['price_range'].shift(-1)
-        df['next_amp'] = df['amp'].shift(-1)
-        df['next_amp_type'] = df['amp_type'].shift(-1)
-        return df
+            ksgn_profit = 'next_profit_' + str(j)
+            ksgn_rate = 'next_rate_' + str(j)
+
+            df[ksgn_profit] = df['close'].shift(-1 * (j)).sub(df['close'])
+            df[ksgn_rate] = df[ksgn_profit].div(df['close'])
+
+            columns.append(ksgn_profit)
+            columns.append(ksgn_rate)
+
+        df['next_rate_10_type'] = df['next_rate_10'].apply(zt.iff3type, d0=0, d9=0.05, v3=3, v2=2, v1=1)  # 振幅分类器
+        columns.append('next_rate_10_type')
+
+        return df, columns
 
     # 其它处理
     def prepared_other(df):
@@ -93,10 +176,11 @@ class DataPrepared():
         # 清除NaN值
         if type == 'dropna':
             df = df.dropna(axis=0, how='any', inplace=False)  # 删除为空的行
-        else:
+        if type == 'pad':
             df = df.fillna(method='pad')
+        if type == 'bfill':
             df = df.fillna(method='bfill')
-        #
+
         return df
 
     # 处理标签数据
@@ -119,37 +203,25 @@ class DataPrepared():
         else:
             return df.sample(frac=frac, replace=True), df.sample(frac=1 - frac, replace=True)
 
+
 class DataLoaderEx():
     """A class for loading and transforming data for the lstm model"""
 
-    def __init__(self, filename, split):
+    def __init__(self, filename, featureslist, split):
         '''
         filename:数据所在文件名， '.csv'格式文件
         split:训练与测试数据分割变量
         cols:选择data的一列或者多列进行分析，如 Close 和 Volume
         '''
-        dataframe = pd.read_csv(filename)
-        dataframe = self.model_rate(dataframe)
-        self.features_lst = dataframe.columns.values
+        self.dataframe = pd.read_csv(filename)
+        self.dataframe, self.x_columns = DataPrepared.prepared(self.dataframe, featureslist)
 
-        i_split = int(len(dataframe) * split)
-        self.data_train = dataframe.get(self.features_lst)[:i_split]  # 选择指定的列 进行分割 得到 未处理的训练数据
-        self.data_test = dataframe.get(self.features_lst)[i_split:]
+        i_split = int(len(self.dataframe) * split)
+        self.data_train = self.dataframe.get(self.x_columns)[:i_split]  # 选择指定的列 进行分割 得到 未处理的训练数据
+        self.data_test = self.dataframe.get(self.x_columns)[i_split:]
         self.len_train = len(self.data_train)
         self.len_test = len(self.data_test)
         self.len_train_windows = None
-
-    def model_rate(self, df):
-        df = df.sort_values('date')  # 日期排序
-        df = DataPrepared.prepared_pre_next(df)  # 前一天收盘价和后一天的开盘价
-        df = DataPrepared.prepared_next_profit(df, 1, 10, 1)  # 计算第1天到第10天的收益值，从第1天开始，计算10次，步长为1天\
-        df = DataPrepared.prepared_next_rate(df, 5, 2, 5)  # 计算第5天和第10天的收益率，从第5天开始，计算2次，步长为5天
-        df = DataPrepared.prepared_avg(df)  # 填充均值
-        df = DataPrepared.prepared_ma(df)  # 填充MA均线
-        df = DataPrepared.prepared_amp(df)  # 填充最大振幅
-        df = DataPrepared.prepared_next(df)  # 填充次日数据
-        df = DataPrepared.prepared_other(df)  # 填充其它swi
-        return df
 
     def get_test_data(self, seq_len, normalise):
         '''
@@ -223,6 +295,7 @@ class DataLoaderEx():
             normalised_data.append(normalised_window)
         return np.array(normalised_data)
 
+
 class ModelEx():
 
     def __init__(self):
@@ -242,7 +315,7 @@ class ModelEx():
         my_tools.check_path_exists(filename)
         return self.model.save(filename)
 
-    def build_model(self, configs):
+    def build_model(self, configs, num_in = 10, num_out = 1):
         """
         新建一个模型
         configs:配置文件
@@ -259,40 +332,58 @@ class ModelEx():
             input_dim = layer['input_dim'] if 'input_dim' in layer else None
 
             if layer['type'] == 'lstm':
-                self.model.add(LSTM(neurons, input_shape=(input_timesteps, input_dim), return_sequences=return_seq))
+
+                if isinstance(neurons, str) and neurons[0] == "x":
+                    neurons_in = num_in * int(neurons.replace("x", ""))
+                else:
+                    neurons_in = neurons
+
+                if isinstance(input_timesteps, str) and input_timesteps[0] == "x":
+                    input_timesteps_in = num_in * int(input_timesteps.replace("x", ""))
+                else:
+                    input_timesteps_in = input_timesteps
+
+                if isinstance(input_dim, str) and input_dim[0] == "x":
+                    input_dim_in = num_in * int(input_dim.replace("x", ""))
+                else:
+                    input_dim_in = input_dim
+
+                self.model.add(LSTM(neurons_in, input_shape=(input_timesteps_in, input_dim_in), return_sequences=return_seq))
             if layer['type'] == 'dropout':
                 self.model.add(Dropout(dropout_rate))
             if layer['type'] == 'dense':
-                self.model.add(Dense(neurons, activation=activation))
+                if isinstance(neurons, str) and neurons[0] == "x":
+                    neurons_out = num_out * int(neurons.replace("x", ""))
+                else:
+                    neurons_out = neurons
+                self.model.add(Dense(neurons_out, activation=activation))
 
-        self.model.compile(loss=configs['model']['loss'], optimizer=configs['model']['optimizer'], metrics=configs['model']['acc'])
+        self.model.compile(loss=configs['model']['loss'], optimizer=configs['model']['optimizer'],
+                           metrics=configs['model']['acc'])
 
         print('[Model] Model Compiled')
         timer.stop()  # 输出构建一个模型耗时
 
 
-#TODO 训练入口
+# TODO 训练入口
 def training(code, datafile, modelfile):
-    evaluation = ta.g.config['data']['evaluation'] # 是否评估
+    evaluation = ta.g.config['data']['evaluation']  # 是否评估
     split = ta.g.config['data']['train_test_split']
     if not evaluation:
         split = 1  # 若不评估模型准确度，则将全部历史数据用于训练
 
     # 从本地加载训练和测试数据
-    features_lst = ta.g.config['data']['ohlcv'] + \
-                   ta.g.config['data']['next'] + \
-                   ta.g.config['data']['avg'] + \
-                   ta.g.config['data']['amp']
+    data = DataLoaderEx(datafile, ta.g.config['model']['xfeatures'], split)
 
-    data = DataLoaderEx(datafile, split)
-    x_train = my_dm.util.get_features(data.data_train, features_lst)
-    x_test = my_dm.util.get_features(data.data_test, features_lst)
+
+    x_train = my_dm.util.get_features(data.data_train, data.x_columns)
+    x_test = my_dm.util.get_features(data.data_test, data.x_columns)
 
     y_train = my_dm.util.prepared_y(data.data_train, 'next_rate_10_type', 'onehot')
     y_test = my_dm.util.prepared_y(data.data_test, 'next_rate_10_type', 'onehot')
 
     y_lst = y_train[0]
-    x_lst = features_lst
+    x_lst = x_train[0]
 
     num_in, num_out = len(x_lst), len(y_lst)
 
@@ -312,16 +403,16 @@ def training(code, datafile, modelfile):
 
     # TODO 开始建模
     m = ModelEx()
-    # m.build_model(ta.g.config)  # 根据配置文件新建模型
-    m.model = zks.lstm020typ(num_in, num_out)
+    m.build_model(ta.g.config, num_in, num_out)  # 根据配置文件新建模型
+    # m.model = zks.lstm020typ(num_in, num_out)
 
     m.model.summary()
-    plot_model(m.model, to_file = ta.g.log_path + 'model.png')
+    plot_model(m.model, to_file=ta.g.log_path + 'model.png')
 
     print('\n#4 模型训练 fit')
-    tbCallBack = keras.callbacks.TensorBoard(log_dir = ta.g.log_path, write_graph = True, write_images = True)
+    tbCallBack = keras.callbacks.TensorBoard(log_dir=ta.g.log_path, write_graph=True, write_images=True)
     tn0 = arrow.now()
-    m.model.fit(x_train, y_train, epochs = 500, batch_size = 512, callbacks = [tbCallBack])
+    m.model.fit(x_train, y_train, epochs=500, batch_size=512, callbacks=[tbCallBack])
     tn = zt.timNSec('', tn0, True)
 
     m.save_model(modelfile)
