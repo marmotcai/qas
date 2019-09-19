@@ -64,6 +64,12 @@
 	},
 	"model": {
 		"xfeatures": [
+			"ohlcv", "avg", "pre_next", "amp", "next_rate"
+		],
+		"yfeatures": [
+			"next_rate_10_type"
+		],
+		"xfeatures-": [
 			"ohlcv", "avg", "ma", "pre_next", "next_profit", "next_rate", "amp"
 		],
 		"acc": ["acc"],

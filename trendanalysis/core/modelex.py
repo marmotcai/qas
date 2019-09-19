@@ -27,11 +27,10 @@ class DataPrepared():
         pd.set_option('display.width', 450)
         pd.set_option('display.float_format', zt.xfloat3)
 
-    def prepared(df, featureslist):
-        x_columns = []
+    def prepared(df, x_featureslist, y_featureslist):
         df = df.sort_values('date')  # 日期排序
-
-        for features in featureslist:
+        x_columns = []
+        for features in x_featureslist:
             if features == 'ohlcv':
                 for i in ta.g.config["data"]["ohlcv"]:
                     x_columns.append(i)
@@ -61,7 +60,18 @@ class DataPrepared():
                 for i in columns: x_columns.append(i)
 
         df = DataPrepared.prepared_other(df)  # 填充其它swi
-        return df, x_columns
+
+        y_columns = []
+        for features in y_featureslist:
+            if features == 'next_open_type':
+                df, columns = DataPrepared.prepared_next_close_type(df)  # 填充最大振幅
+                for i in columns: y_columns.append(i)
+
+            if features == 'next_rate_10_type':
+                df, columns = DataPrepared.prepared_next_rate_10_type(df)  # 计算第5天和第10天的收益率，从第5天开始，计算2次，步长为5天
+                for i in columns: y_columns.append(i)
+
+        return df, x_columns, y_columns
 
     def get_onehot(df, k):
         return pd.get_dummies(df[k]).values
@@ -163,14 +173,24 @@ class DataPrepared():
             columns.append(ksgn_profit)
             columns.append(ksgn_rate)
 
-        df['next_rate_10_type'] = df['next_rate_10'].apply(zt.iff3type, d0=0, d9=0.05, v3=3, v2=2, v1=1)  # 振幅分类器
-        columns.append('next_rate_10_type')
-
         return df, columns
 
     # 其它处理
     def prepared_other(df):
         return df
+
+    def prepared_next_close_type(df):
+        columns = []
+        df['next_close'] = df['close'].shift(-1)  # 后一天的开盘价
+        columns.append('next_close')
+        return df, columns
+
+    def prepared_next_rate_10_type(df):
+        columns = []
+        df['next_rate_10_type'] = df['next_rate_10'].apply(zt.iff3type, d0=0, d9=0.05, v3=3, v2=2, v1=1)  # 振幅分类器
+        columns.append('next_rate_10_type')
+        return df, columns
+
 
     def prepared_clean(df, type='dropna'):
         # 清除NaN值
@@ -207,18 +227,18 @@ class DataPrepared():
 class DataLoaderEx():
     """A class for loading and transforming data for the lstm model"""
 
-    def __init__(self, filename, featureslist, split):
+    def __init__(self, filename, x_featureslist, y_featureslist, split):
         '''
         filename:数据所在文件名， '.csv'格式文件
         split:训练与测试数据分割变量
         cols:选择data的一列或者多列进行分析，如 Close 和 Volume
         '''
         self.dataframe = pd.read_csv(filename)
-        self.dataframe, self.x_columns = DataPrepared.prepared(self.dataframe, featureslist)
+        self.dataframe, self.x_features, self.y_features = DataPrepared.prepared(self.dataframe, x_featureslist, y_featureslist)
 
         i_split = int(len(self.dataframe) * split)
-        self.data_train = self.dataframe.get(self.x_columns)[:i_split]  # 选择指定的列 进行分割 得到 未处理的训练数据
-        self.data_test = self.dataframe.get(self.x_columns)[i_split:]
+        self.data_train = self.dataframe.get(self.x_features + self.y_features)[:i_split]  # 选择指定的列 进行分割 得到 未处理的训练数据
+        self.data_test = self.dataframe.get(self.x_features + self.y_features)[i_split:]
         self.len_train = len(self.data_train)
         self.len_test = len(self.data_test)
         self.len_train_windows = None
@@ -373,14 +393,13 @@ def training(code, datafile, modelfile):
         split = 1  # 若不评估模型准确度，则将全部历史数据用于训练
 
     # 从本地加载训练和测试数据
-    data = DataLoaderEx(datafile, ta.g.config['model']['xfeatures'], split)
+    data = DataLoaderEx(datafile, ta.g.config['model']['xfeatures'], ta.g.config['model']['yfeatures'], split)
 
+    x_train = my_dm.util.get_prepared_x(data.data_train, data.x_features)
+    x_test = my_dm.util.get_prepared_x(data.data_test, data.x_features)
 
-    x_train = my_dm.util.get_features(data.data_train, data.x_columns)
-    x_test = my_dm.util.get_features(data.data_test, data.x_columns)
-
-    y_train = my_dm.util.prepared_y(data.data_train, 'next_rate_10_type', 'onehot')
-    y_test = my_dm.util.prepared_y(data.data_test, 'next_rate_10_type', 'onehot')
+    y_train = my_dm.util.get_prepared_y(data.data_train, data.y_features, 'onehot')
+    y_test = my_dm.util.get_prepared_y(data.data_test, data.y_features, 'onehot')
 
     y_lst = y_train[0]
     x_lst = x_train[0]

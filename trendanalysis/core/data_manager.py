@@ -140,7 +140,7 @@ class util():
     def get_onehot(df, k):
         return pd.get_dummies(df[k]).values
 
-    def get_features(df, features_lst):
+    def get_prepared_x(df, features_lst):
         return df[features_lst].values
 
     # 填充前一天和后一天的值
@@ -210,7 +210,7 @@ class util():
         return df
 
     # 处理标签数据
-    def prepared_y(df, y_key, type = ''):
+    def get_prepared_y(df, y_key, type = ''):
         # 处理标签
         df['y'] = df[y_key] # 输出
 
@@ -218,7 +218,7 @@ class util():
             # 分类模式， One-Hot
             return util.get_onehot(df, 'y')
         else:
-            return df['y']
+            return util.get_onehot(df, y_key)
 
     def split(df, frac, random = True):
         # 训练数据和测试数据分割
