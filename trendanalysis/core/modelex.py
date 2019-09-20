@@ -1,25 +1,22 @@
 # -*-coding:utf-8 -*-
 
-import arrow
+import os
+import math
 import numpy as np
 import pandas as pd
 
-import keras
 from keras.models import Sequential, load_model
 from keras.layers import Dense, Dropout, LSTM
-from keras.utils import plot_model
-import pydot_ng as pydot
-
-print(pydot.find_graphviz())
+from keras.callbacks import EarlyStopping, ModelCheckpoint
+# import pydot_ng as pydot
+# print(pydot.find_graphviz())
 
 from trendanalysis.utils.tools import Timer
 from trendanalysis.core import data_manager as my_dm
-
+from trendanalysis.core import evaluation as eva
 import trendanalysis as ta
 from trendanalysis.vendor import ztools as zt
 from trendanalysis.utils import tools as my_tools
-from trendanalysis.core import evaluation as eva
-from trendanalysis.vendor import zai_keras as zks
 
 class DataPrepared():
     def __init__(self):
@@ -63,6 +60,9 @@ class DataPrepared():
 
         y_columns = []
         for features in y_featureslist:
+            if features == 'next_open':
+                y_columns.append("open")
+
             if features == 'next_open_type':
                 df, columns = DataPrepared.prepared_next_close_type(df)  # 填充最大振幅
                 for i in columns: y_columns.append(i)
@@ -191,7 +191,6 @@ class DataPrepared():
         columns.append('next_rate_10_type')
         return df, columns
 
-
     def prepared_clean(df, type='dropna'):
         # 清除NaN值
         if type == 'dropna':
@@ -234,11 +233,15 @@ class DataLoaderEx():
         cols:选择data的一列或者多列进行分析，如 Close 和 Volume
         '''
         self.dataframe = pd.read_csv(filename)
-        self.dataframe, self.x_features, self.y_features = DataPrepared.prepared(self.dataframe, x_featureslist, y_featureslist)
+        self.dataframe, self.x_features, self.y_features = \
+            DataPrepared.prepared(self.dataframe, x_featureslist, y_featureslist)
+
+        # t_data = self.dataframe[: 1]
+        self.num_in, self.num_out = len(self.x_features), len(self.y_features)
 
         i_split = int(len(self.dataframe) * split)
-        self.data_train = self.dataframe.get(self.x_features + self.y_features)[:i_split]  # 选择指定的列 进行分割 得到 未处理的训练数据
-        self.data_test = self.dataframe.get(self.x_features + self.y_features)[i_split:]
+        self.data_train = self.dataframe.get(self.x_features)[:i_split]  # 选择指定的列 进行分割 得到 未处理的训练数据
+        self.data_test = self.dataframe.get(self.x_features)[i_split:]
         self.len_train = len(self.data_train)
         self.len_test = len(self.data_test)
         self.len_train_windows = None
@@ -294,7 +297,7 @@ class DataLoaderEx():
 
     def _next_window(self, i, seq_len, normalise):
         '''Generates the next data window from the given index location i'''
-        window = self.data_train[i: i + seq_len]
+        window = self.data_train[i: i + seq_len].values
         window = self.normalise_windows(window, single_window=True)[0] if normalise else window
         x = window[: -1]
         y = window[-1, [0]]  # 最后一行的 0个元素 组成array类型，若是[0,2]则取第0个和第2个元素组成array，[-1, 0]：则是取最后一行第0个元素，
@@ -335,7 +338,7 @@ class ModelEx():
         my_tools.check_path_exists(filename)
         return self.model.save(filename)
 
-    def build_model(self, configs, num_in = 10, num_out = 1):
+    def build_model(self, configs, num_in=10, num_out=1):
         """
         新建一个模型
         configs:配置文件
@@ -368,7 +371,8 @@ class ModelEx():
                 else:
                     input_dim_in = input_dim
 
-                self.model.add(LSTM(neurons_in, input_shape=(input_timesteps_in, input_dim_in), return_sequences=return_seq))
+                self.model.add(
+                    LSTM(neurons_in, input_shape=(input_timesteps_in, input_dim_in), return_sequences=return_seq))
             if layer['type'] == 'dropout':
                 self.model.add(Dropout(dropout_rate))
             if layer['type'] == 'dense':
@@ -378,12 +382,34 @@ class ModelEx():
                     neurons_out = neurons
                 self.model.add(Dense(neurons_out, activation=activation))
 
-        self.model.compile(loss=configs['model']['loss'], optimizer=configs['model']['optimizer'],
-                           metrics=configs['model']['acc'])
+        self.model.compile(loss=configs['model']['loss'], optimizer=configs['model']['optimizer'])
 
         print('[Model] Model Compiled')
         timer.stop()  # 输出构建一个模型耗时
 
+    def train_generator(self, data_gen, epochs, batch_size, steps_per_epoch, save_dir, save_name):
+        '''
+        由data_gen数据产生器来，逐步产生训练数据，而不是一次性将数据读入到内存
+        '''
+        timer = Timer()
+        timer.start()
+        print('[Model] Training Started')
+        print('[Model] %s epochs, %s batch size, %s batches per epoch' % (epochs, batch_size, steps_per_epoch))
+
+        save_fname = os.path.join(save_dir, save_name + '.h5')
+        callbacks = [
+            ModelCheckpoint(filepath=save_fname, monitor='loss', save_best_only=True)
+        ]
+        self.model.fit_generator(
+            data_gen,
+            steps_per_epoch=steps_per_epoch,
+            epochs=epochs,
+            callbacks=callbacks,
+            workers=1
+        )
+
+        print('[Model] Training Completed. Model saved as %s' % save_fname)
+        timer.stop()
 
 # TODO 训练入口
 def training(code, datafile, modelfile):
@@ -395,46 +421,66 @@ def training(code, datafile, modelfile):
     # 从本地加载训练和测试数据
     data = DataLoaderEx(datafile, ta.g.config['model']['xfeatures'], ta.g.config['model']['yfeatures'], split)
 
-    x_train = my_dm.util.get_prepared_x(data.data_train, data.x_features)
-    x_test = my_dm.util.get_prepared_x(data.data_test, data.x_features)
-
-    y_train = my_dm.util.get_prepared_y(data.data_train, data.y_features, 'onehot')
-    y_test = my_dm.util.get_prepared_y(data.data_test, data.y_features, 'onehot')
-
-    y_lst = y_train[0]
-    x_lst = x_train[0]
-
-    num_in, num_out = len(x_lst), len(y_lst)
-
-    print('\n self.df_test.tail()', data.data_test.tail())
-    print('\n self.x_train.shape,', x_train.shape)
-    print('\n type(self.x_train),', type(x_train))
-
-    rxn = x_train.shape[0]
-    x_train = x_train.reshape(rxn, num_in, -1)
-    txn = x_test.shape[0]
-    x_test = x_test.reshape(txn, num_in, -1)
-
-    print('\n x_train.shape,', x_train.shape)
-    print('\n type(x_train),', type(x_train))
-
-    print('\n num_in, num_out:', num_in, num_out)
-
+#    x_train = my_dm.util.get_prepared_x(data.data_train, data.x_features)
+#    x_test = my_dm.util.get_prepared_x(data.data_test, data.x_features)
+#
+#    y_train = my_dm.util.get_prepared_y(data.data_train, data.y_features, 'onehot')
+#    y_test = my_dm.util.get_prepared_y(data.data_test, data.y_features, 'onehot')
+#
+#    y_lst = y_train[0]
+#    x_lst = x_train[0]
+#
+#    num_in, num_out = len(x_lst), len(y_lst)
+#
+#    print('\n self.df_test.tail()', data.data_test.tail())
+#    print('\n self.x_train.shape,', x_train.shape)
+#    print('\n type(self.x_train),', type(x_train))
+#
+#    rxn = x_train.shape[0]
+#    x_train = x_train.reshape(rxn, num_in, -1)
+#    txn = x_test.shape[0]
+#    x_test = x_test.reshape(txn, num_in, -1)
+#
+#    print('\n x_train.shape,', x_train.shape)
+#    print('\n type(x_train),', type(x_train))
+#
+#    print('\n num_in, num_out:', num_in, num_out)
+#
     # TODO 开始建模
     m = ModelEx()
-    m.build_model(ta.g.config, num_in, num_out)  # 根据配置文件新建模型
+#   m.build_model(ta.g.config, num_in, num_out)  # 根据配置文件新建模型
+    m.build_model(ta.g.config, data.num_in, data.num_out)
     # m.model = zks.lstm020typ(num_in, num_out)
-
-    m.model.summary()
-    plot_model(m.model, to_file=ta.g.log_path + 'model.png')
-
-    print('\n#4 模型训练 fit')
-    tbCallBack = keras.callbacks.TensorBoard(log_dir=ta.g.log_path, write_graph=True, write_images=True)
-    tn0 = arrow.now()
-    m.model.fit(x_train, y_train, epochs=500, batch_size=512, callbacks=[tbCallBack])
-    tn = zt.timNSec('', tn0, True)
-
-    m.save_model(modelfile)
+    # 训练模型：
+    # out-of memory generative training
+    steps_per_epoch = math.ceil(
+        (data.len_train - ta.g.config['data']['sequence_length']) / ta.g.config['training']['batch_size'])
+    m.train_generator(
+        data_gen=data.generate_train_batch(
+            seq_len=ta.g.config['data']['sequence_length'],
+            batch_size=ta.g.config['training']['batch_size'],
+            normalise=ta.g.config['data']['normalise']
+        ),
+        epochs=ta.g.config['training']['epochs'],
+        batch_size=ta.g.config['training']['batch_size'],
+        steps_per_epoch=steps_per_epoch,
+        save_dir=ta.g.mod_path,
+        save_name=code
+    )
 
     eva_obj = eva.evaluation(data)
     eva_obj.predict(m.model, data.data_test, x_test)
+
+#    m.model.summary()
+#    plot_model(m.model, to_file=ta.g.log_path + 'model.png')
+#
+#    print('\n#4 模型训练 fit')
+#    tbCallBack = keras.callbacks.TensorBoard(log_dir=ta.g.log_path, write_graph=True, write_images=True)
+#    tn0 = arrow.now()
+#    m.model.fit(x_train, y_train, epochs=500, batch_size=512, callbacks=[tbCallBack])
+#    tn = zt.timNSec('', tn0, True)
+#
+#    m.save_model(modelfile)
+#
+#    eva_obj = eva.evaluation(data)
+#    eva_obj.predict(m.model, data.data_test, x_test)

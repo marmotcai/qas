@@ -64,24 +64,24 @@
 	},
 	"model": {
 		"xfeatures": [
-			"ohlcv", "avg", "pre_next", "amp", "next_rate"
+			"ohlcv"
 		],
 		"yfeatures": [
-			"next_rate_10_type"
+			"next_open"
 		],
 		"xfeatures-": [
 			"ohlcv", "avg", "ma", "pre_next", "next_profit", "next_rate", "amp"
 		],
 		"acc": ["acc"],
-		"loss": "categorical_crossentropy",
+		"loss": "mse",
 		"optimizer": "adam",
 		"save_dir": "saved_models",
 		"layers": [
 			{
 				"type": "lstm",
 				"neurons": "x8",
-				"input_timesteps": "x1",
-				"input_dim": 1,
+				"input_timesteps": 29,
+				"input_dim": "x1",
 				"return_seq": true
 			},
 			{
