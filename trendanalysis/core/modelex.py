@@ -5,18 +5,30 @@ import math
 import numpy as np
 import pandas as pd
 
+import keras
 from keras.models import Sequential, load_model
 from keras.layers import Dense, Dropout, LSTM
 from keras.callbacks import EarlyStopping, ModelCheckpoint
+from keras.utils import plot_model
 # import pydot_ng as pydot
 # print(pydot.find_graphviz())
-
+import matplotlib.pyplot as plt
+from datetime import datetime, timedelta
 from trendanalysis.utils.tools import Timer
 from trendanalysis.core import data_manager as my_dm
 from trendanalysis.core import evaluation as eva
 import trendanalysis as ta
 from trendanalysis.vendor import ztools as zt
 from trendanalysis.utils import tools as my_tools
+from trendanalysis.vendor import ztools_tq as ztq
+
+def plot_results(predicted_data, true_data):  # predicted_data与true_data：同长度一维数组
+    fig = plt.figure(facecolor='white')
+    ax = fig.add_subplot(111)
+    ax.plot(true_data, label='True Data')
+    plt.plot(predicted_data, label='Prediction')
+    plt.legend()
+    plt.show()
 
 class DataPrepared():
     def __init__(self):
@@ -74,10 +86,10 @@ class DataPrepared():
         return df, x_columns, y_columns
 
     def get_onehot(df, k):
-        return pd.get_dummies(df[k]).values
+        return pd.get_dummies(df[k])
 
     def get_features(df, features_lst):
-        return df[features_lst].values
+        return df[features_lst]
 
     # 填充前一天和后一天的值
     def prepared_pre_next(df):
@@ -240,8 +252,8 @@ class DataLoaderEx():
         self.num_in, self.num_out = len(self.x_features), len(self.y_features)
 
         i_split = int(len(self.dataframe) * split)
-        self.data_train = self.dataframe.get(self.x_features)[:i_split]  # 选择指定的列 进行分割 得到 未处理的训练数据
-        self.data_test = self.dataframe.get(self.x_features)[i_split:]
+        self.data_train = self.dataframe.get(self.x_features).values[:i_split]  # 选择指定的列 进行分割 得到 未处理的训练数据
+        self.data_test = self.dataframe.get(self.x_features).values[i_split:]
         self.len_train = len(self.data_train)
         self.len_test = len(self.data_test)
         self.len_train_windows = None
@@ -297,7 +309,7 @@ class DataLoaderEx():
 
     def _next_window(self, i, seq_len, normalise):
         '''Generates the next data window from the given index location i'''
-        window = self.data_train[i: i + seq_len].values
+        window = self.data_train[i: i + seq_len]
         window = self.normalise_windows(window, single_window=True)[0] if normalise else window
         x = window[: -1]
         y = window[-1, [0]]  # 最后一行的 0个元素 组成array类型，若是[0,2]则取第0个和第2个元素组成array，[-1, 0]：则是取最后一行第0个元素，
@@ -411,6 +423,47 @@ class ModelEx():
         print('[Model] Training Completed. Model saved as %s' % save_fname)
         timer.stop()
 
+    # 输入一个窗口的数据，指定预测的长度，data:依旧是三维数组(1,win_len,fea_len)
+    # 返回预测数组
+    def predict_sequence_full(self, data, window_size): # window_size：为输入数据的长度
+        #Shift the window by 1 new prediction each time, re-run predictions on new window
+        curr_frame = data[0]    # 基于data[0]一个窗口的数据，来预测len(data)个输出
+        predicted = []
+        for i in range(len(data)):
+            predicted.append(self.model.predict(curr_frame[np.newaxis,:,:])[0,0])  # append了一个预测值（标量）
+            curr_frame = curr_frame[1:]
+            curr_frame = np.insert(curr_frame, [window_size-2], predicted[-1], axis=0)  # 插入位置[window_size-2]:curr_frame的末尾，predicted[-1]：插入值
+        return predicted
+
+    # 对data进行多段预测，每段预测基于一个窗口大小（window_size）的数据，然后输出prediction_len长的预测值（一维数组）
+    # 再从上一个窗口移动prediction_len的长度，得到下一个窗口的数据，并基于该数据再预测prediction_len长的预测值
+    # 所以prediction_len决定了窗口的移位步数，每次的窗口大小是一样的，所以最后预测的段数 = 窗口个数/预测长度
+    # 相当于多次调用predict_1_win_sequence方法
+    def predict_sequences_multiple(self, data, window_size, prediction_len):
+        #Predict sequence of 50 steps before shifting prediction run forward by 50 steps
+        prediction_seqs = []
+        for i in range(int(len(data)/prediction_len)):
+            curr_frame = data[i*prediction_len]
+            predicted = []
+            for j in range(prediction_len):
+                predicted.append(self.model.predict(curr_frame[np.newaxis,:,:])[0,0])  # newaxis：增加新轴，使得curr_frame变成(1,x,x)三维数据
+                curr_frame = curr_frame[1:]
+                curr_frame = np.insert(curr_frame, [window_size-2], predicted[-1], axis=0)
+            prediction_seqs.append(predicted)
+        return prediction_seqs
+
+    # 输入一个窗口的数据，指定预测的长度，data:依旧是三维数组(1,win_len,fea_len)
+    # 返回预测数组
+    def predict_1_win_sequence(self, data, window_size,predict_length): # window_size：data的窗口大小
+        #Shift the window by 1 new prediction each time, re-run predictions on new window
+        curr_frame = data[0]
+        predicted = []
+        for i in range(predict_length): # range(len(data))
+            predicted.append(self.model.predict(curr_frame[np.newaxis,:,:])[0,0])  # append了一个预测值（标量）
+            curr_frame = curr_frame[1:]
+            curr_frame = np.insert(curr_frame, [window_size-2], predicted[-1], axis=0)  # 插入位置[window_size-2]:curr_frame的末尾，predicted[-1]：插入值
+        return predicted
+
 # TODO 训练入口
 def training(code, datafile, modelfile):
     evaluation = ta.g.config['data']['evaluation']  # 是否评估
@@ -451,6 +504,10 @@ def training(code, datafile, modelfile):
 #   m.build_model(ta.g.config, num_in, num_out)  # 根据配置文件新建模型
     m.build_model(ta.g.config, data.num_in, data.num_out)
     # m.model = zks.lstm020typ(num_in, num_out)
+
+    m.model.summary()
+    plot_model(m.model, to_file=ta.g.log_path + 'model.png')
+
     # 训练模型：
     # out-of memory generative training
     steps_per_epoch = math.ceil(
@@ -468,11 +525,26 @@ def training(code, datafile, modelfile):
         save_name=code
     )
 
-    eva_obj = eva.evaluation(data)
-    eva_obj.predict(m.model, data.data_test, x_test)
+    # 预测
+    x_test, y_test = data.get_test_data(
+        seq_len=ta.g.config['data']['sequence_length'],
+        normalise=ta.g.config['data']['normalise']
+    )
 
-#    m.model.summary()
-#    plot_model(m.model, to_file=ta.g.log_path + 'model.png')
+    # predictions = m.predict_sequences_multiple(x_test, ta.g.config['data']['sequence_length'],
+    #                                                    ta.g.config['data']['sequence_length'])
+
+    y_true = []
+    for y in y_test:
+        y_true.append(y[0])
+
+    # y_true = y_test.tolist()
+    y_pred = m.predict_sequence_full(x_test, ta.g.config['data']['sequence_length'])
+    print("训练：\n", y_pred)
+
+    dacc, dfx, a10 = ztq.ai_acc_xed2ext(y_true, y_pred, ky0=3, fgDebug=True)
+    print("dacc:\n", dacc)
+
 #
 #    print('\n#4 模型训练 fit')
 #    tbCallBack = keras.callbacks.TensorBoard(log_dir=ta.g.log_path, write_graph=True, write_images=True)
@@ -484,3 +556,67 @@ def training(code, datafile, modelfile):
 #
 #    eva_obj = eva.evaluation(data)
 #    eva_obj.predict(m.model, data.data_test, x_test)
+def format_predictions(predictions):    # 给预测数据添加对应日期
+    date_predict = []
+    cur = datetime.now()
+    cur += timedelta(days=1)
+    counter = 0
+
+    while counter < len(predictions):
+        if cur.isoweekday()  == 6:
+            cur = cur + timedelta(days=2)
+        if cur.isoweekday()  == 7:
+            cur = cur + timedelta(days=1)
+        date_predict.append([cur.strftime("%Y-%m-%d"),predictions[counter]])
+        cur = cur + timedelta(days=1)
+        counter += 1
+
+    return date_predict
+
+def predict(code, datafile, modelfile, real = True, pre_len = 10, plot = True):
+    m = ModelEx()
+    keras.backend.clear_session()
+    m.load_model(modelfile)
+
+    split = ta.g.config['data']['train_test_split']
+    data = DataLoaderEx(datafile, ta.g.config['model']['xfeatures'], ta.g.config['model']['yfeatures'], split)
+
+    # predict_length = configs['data']['sequence_length']   # 预测长度
+    predict_length = pre_len
+    if real:  # 用最近一个窗口的数据进行预测，没有对比数据
+        win_position = -1
+    else:  # 用指定位置的一个窗口数据进行预测，有对比真实数据（用于绘图对比）
+        win_position = -ta.g.config['data']['sequence_length']
+
+    x_test, y_test = data.get_test_data(
+        seq_len = ta.g.config['data']['sequence_length'],
+        normalise = False
+    )
+
+    x_test = x_test[win_position]
+    x_test = x_test[np.newaxis, :, :]
+    if not real:
+        y_test_real = y_test[win_position:win_position + predict_length]
+
+    base = x_test[0][0][0]
+    print("base value:\n", base)
+
+    predictions = m.predict_1_win_sequence(x_test, ta.g.config['data']['sequence_length'], predict_length)
+    # 反归一化
+    if (ta.g.config['data']['normalise']):
+        predictions_array = np.array(predictions)
+        predictions_array = base * (1 + predictions_array)
+        predictions = predictions_array.tolist()
+
+    print("预测数据:\n", predictions)
+    if not real:
+        print("真实数据：\n", y_test_real)
+
+    # plot_results_multiple(predictions, y_test, predict_length)
+    if plot:
+        if real:
+            plot_results(predictions, [])
+        else:
+            plot_results(predictions, y_test_real)
+
+    return format_predictions(predictions)

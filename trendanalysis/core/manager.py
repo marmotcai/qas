@@ -466,15 +466,16 @@ def modeling(params):
     my_modelex.training(code, datafile, modfile)
 
 def predict(params):
-    type, code, datafile, modfile = prepared(params)
+    type, code, datafile, modfile, lstfile = prepared(params)
 
     if not my_tools.path_exists(modfile):
         modeling(params)
 
-    mo = model(type, datafile)
-    y = mo.predict(modfile)
-    print(y)
+    my_modelex.predict(code, datafile, modfile)
 
+    # mo = model(type, datafile)
+    # y = mo.predict(modfile)
+    # print(y)
 
 def evaluation(params):
     print(params)
@@ -508,8 +509,8 @@ def main(argv):
             modeling(value)
             # train(value)
         if name in ("-p", "--predict"):
-            # predict(value)
-            prediction(value)
+            predict(value)
+            # prediction(value)
         if name in ("-t", "--test"):
             test_gpu()
 

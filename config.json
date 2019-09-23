@@ -91,6 +91,11 @@
 			{
 				"type": "lstm",
 				"neurons": "x4",
+				"return_seq": true
+			},
+			{
+				"type": "lstm",
+				"neurons": "x4",
 				"return_seq": false
 			},
 			{
@@ -100,7 +105,7 @@
 			{
 				"type": "dense",
 				"neurons": "x1",
-				"activation": "softmax"
+				"activation": "linear"
 			}
 		]
 	},
