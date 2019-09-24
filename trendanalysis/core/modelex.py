@@ -69,11 +69,14 @@ class DataPrepared():
                 for i in columns: x_columns.append(i)
 
         df = DataPrepared.prepared_other(df)  # 填充其它swi
-
+        df = DataPrepared.prepared_clean(df, 'dropna')
         y_columns = []
         for features in y_featureslist:
             if features == 'next_open':
                 y_columns.append("open")
+
+            if features == 'amp_type':
+                y_columns.append("amp_type")
 
             if features == 'next_open_type':
                 df, columns = DataPrepared.prepared_next_close_type(df)  # 填充最大振幅
@@ -573,7 +576,7 @@ def format_predictions(predictions):    # 给预测数据添加对应日期
 
     return date_predict
 
-def predict(code, datafile, modelfile, real = True, pre_len = 10, plot = True):
+def predict(code, datafile, modelfile, real = False, pre_len = 10, plot = True):
     m = ModelEx()
     keras.backend.clear_session()
     m.load_model(modelfile)

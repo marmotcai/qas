@@ -56,7 +56,7 @@
 		"evaluation": true,
 		"sequence_length": 30,
 		"train_test_split": 0.80,
-		"normalise": false
+		"normalise": true
 	},
 	"training": {
 		"epochs": 1,
@@ -64,7 +64,7 @@
 	},
 	"model": {
 		"xfeatures": [
-			"ohlcv"
+			"ohlcv", "avg"
 		],
 		"yfeatures": [
 			"next_open"
