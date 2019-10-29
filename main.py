@@ -112,6 +112,8 @@ def main(cmd, argv):
             g_dm.main(argv)
         if name in ("-m", "--modeling"):
             g_man.main(argv)
+        if name in ("-m2", "--modeling 2"):
+            g_man.main(argv)
         if name in ("-p", "--predict"):
             g_man.main(argv)
         if name in ("-e", "--evaluation"):

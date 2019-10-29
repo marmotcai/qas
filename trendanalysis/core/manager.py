@@ -465,6 +465,11 @@ def modeling(params):
 
     my_modelex.training(code, datafile, modfile)
 
+def modeling2(params):
+    type, code, datafile, modfile, lstfile = prepared(params)
+
+    my_modelex.training(code, datafile, modfile)
+
 def predict(params):
     type, code, datafile, modfile, lstfile = prepared(params)
 
@@ -508,6 +513,8 @@ def main(argv):
         if name in ("-m", "--modeling"):
             modeling(value)
             # train(value)
+        if name in ("-m2", "--modeling 2"):
+            modeling2(value)
         if name in ("-p", "--predict"):
             predict(value)
             # prediction(value)
