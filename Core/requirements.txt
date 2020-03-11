@@ -1,0 +1,7 @@
+torch
+torchvision
+torchtext
+tqdm
+tushare
+pandas
+matplotlib
