@@ -5,7 +5,28 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: 下载",
+            "name": "Python: 当前文件",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: 下载个股",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-d",
+                "--dir",
+                "../data/"
+                "--code",
+                "300096"
+            ]
+        },
+        {
+            "name": "Python: 下载指数",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/main.py",
@@ -13,7 +34,7 @@
             "args": [
                 "-d",
                 "--code",
-                "300096"
+                "000001"
             ]
         },
         {
@@ -38,6 +59,5 @@
                 "300096.csv"
             ]
         }
-
     ]
 }

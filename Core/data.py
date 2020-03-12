@@ -4,11 +4,91 @@ import tushare as ts
 import numpy as np
 import pandas as pd
 
+class databar():
+    def __init__(self, code, start_d = '2001-01-01'):
+        print("init databar ...")
+        self.index_code = '000300'
+        self.stock_code = code
+        self.start_d = start_d
+        self.end_d = None
+
+        self.cons = ts.get_apis()
+
+    def get_index(self): # 获取沪深300数据
+        df = ts.bar(self.index_code, conn = self.cons, asset = 'INDEX', start_date = self.start_d, end_date = self.end_d)
+
+        df['index_ohlc_avg'] = df[['open', 'high', 'low', 'close']].mean(axis=1).round(2)
+        df = df.drop(['code', 'open', 'high', 'low', 'close', 'amount'], axis = 1)
+        df = df.rename(columns={'vol':'index_vol', 'p_change':'index_p_change'})
+        # df['index_reserve'] = df['index_vol'].div(df['index_ohlc_avg'])
+        #
+        # print(df.head(10))
+        return df
+
+    def get_stock(self): # 获取股票数据
+        df = ts.bar(self.stock_code, conn = self.cons, start_date = self.start_d, end_date = self.end_d, ma=[5, 10, 20], factors=['vr', 'tor'])
+
+        df['ohlc_avg'] = df[['open', 'high', 'low', 'close']].mean(axis=1).round(2)
+        df['y'] = df['close'].shift(+5)
+        
+        df = df.drop(['code', 'open', 'high', 'low', 'close', 'amount'], axis = 1)
+
+        # print(df)
+        # df['reserve'] = df['amount'].div(df['vol'])
+        #
+        # print(df.head(5))
+        return df
+
+    def get(self):
+        df_index = self.get_index()
+        df_stock = self.get_stock()
+        df_stock = pd.merge(df_index, df_stock, left_index=True, right_index=True)
+        df_stock = df_stock.dropna(axis=0, how='any', inplace=False)  # 删除为空的行
+        print(df_stock.head(20))
+        return df_stock
+
+class download():
+    def __init__(self, dir):
+        print("init download ...")
+        self.checkdir(dir)
+        self.down_dir = dir
+
+    def mkdir(self, dir):
+        dir = dir.strip() # 去除首位空格
+        dir = dir.rstrip("\\") # 去除尾部 \ 符号
+        # 判断结果
+        if not os.path.exists(dir):
+            os.makedirs(dir) # 如果不存在则创建目录
+
+    def checkdir(self, path): # 创建目录
+        if os.path.exists(path) == False:
+            self.mkdir(path)
+
+    def download_by_code(self, code, start_d = '2001-01-01'):
+        filename = self.down_dir + code + '.csv'
+
+        databar_obj = databar(code)
+        df = databar_obj.get()
+        df.to_csv(filename, index = False, encoding = 'gbk')
+        return filename
+
+    def read_by_file(self, filename, debug = True):
+        df = pd.read_csv(filename, nrows = 500 if debug else None)
+        print(df.tail(5))
+
+        y_columns = df.columns[df.columns.size - 1]
+        print("y:", y_columns)
+
+        X = df.loc[:, [x for x in df.columns.tolist() if (x != 'date') and (x != y_columns)]].as_matrix()
+        y = np.array(df[y_columns])
+
+        return X, y
+
+###############################################################
+
 ohlcLst = ['open', 'high', 'low', 'close']
 ohlcVLst = ohlcLst+['volume']
 ohlcDVLst = ['date'] + ohlcLst + ['volume']
-
-
 
 def df_xappend(df, df0, ksgn, num_round=3, vlst=ohlcDVLst):
     if (len(df0) > 0):
@@ -151,13 +231,15 @@ def down_stk(down_filepath, xcod, xtyp='D', tim0='1994-01-01', tim1=None, xinx=F
     #     xd0, tim0 = df_rdcsv_tim0(down_filepath, 'date', tim0)
 
     try:
-        xdk = ts.get_k_data(xcod, start=tim0, end=tim1, ktype=xtyp, index=xinx)
+        xdk = ts.get_k_data(xcod, start = tim0, end = tim1, ktype = xtyp, index = xinx)
+        xdk = xdk.sort_values('date')  # 日期排序
         xdk, pre_next_col = prepared_pre_next(xdk)
         xdk, avg_col = prepared_avg(xdk)
         xdk, avgx_col = prepared_avgx(xdk)
         xdk, ma_col = prepared_ma(xdk)
         xdk, amp_col = prepared_amp(xdk)
         xdk = prepared_clean(xdk, 'dropna')
+        print(xdk.columns)
         print(xdk.head())
         # -------------
         if len(xdk) > 0:
@@ -172,8 +254,9 @@ def down_stk(down_filepath, xcod, xtyp='D', tim0='1994-01-01', tim1=None, xinx=F
 
     return xd, down_filepath
 
+###############################################################
 
-def download(dir, code, debug=True):
+def down_data(dir, code, debug=True):
     """
     date：日期
     open：开盘价
@@ -195,6 +278,9 @@ def download(dir, code, debug=True):
 
     down_stk(dir + code + ".csv", code, tim0='2001-01-01', tim1='2017-12-01')
 
+    df = ts.get_index()
+    print(df.head())
+
     # df = ts.get_hist_data(code)
     # df.to_csv(dir + code + ".csv",
     # columns=["open", "high", "low", "close", "volume", "price_change", "p_change", "ma5", "v_ma5"])
@@ -213,7 +299,10 @@ def read_data(input_path, debug=True):
 
     """
     df = pd.read_csv(input_path, nrows=500 if debug else None)
-    X = df.loc[:, [x for x in df.columns.tolist() if x != 'NDX']].as_matrix()
-    y = np.array(df.NDX)
+    print(df.tail(5))
+    y_columns = df.columns[df.columns.size - 1]
+    print(df.tail(5), "/n", y_columns)
+    X = df.loc[:, [x for x in df.columns.tolist() if (x != 'date') and (x != y_columns)]].as_matrix()
+    y = np.array(df[y_columns])
 
     return X, y

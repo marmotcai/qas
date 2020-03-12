@@ -48,12 +48,18 @@ def main():
     print(args)
 
     if args.download:
-        download(args.dir, args.code)
-        args.dataroot = default_data_dir + default_code + ".csv"
+        down_obj = download(args.dir)
+        down_obj.download_by_code(args.code)
+        # down_data(args.dir, args.code)
+        # args.dataroot = default_data_dir + default_code + ".csv"
 
     if args.train:
         print("==> Load dataset: ", args.dataroot, "..")
-        X, y = read_data(args.dataroot, debug = False)
+
+        down_obj = download(args.dir)
+        X, y = down_obj.read_by_file(default_data_dir + args.dataroot, debug = False)
+
+        # X, y = read_data(default_data_dir + args.dataroot, debug = False)
 
         # Initialize model
         print("==> Initialize DA-RNN model ...")
@@ -72,6 +78,8 @@ def main():
         # Train
         print("==> Start training ...")
         model.train()
+
+    print("==> Close  ...")
 
 if __name__ == '__main__':
     main()

@@ -64,7 +64,7 @@ class Encoder(nn.Module):
                            s_n.repeat(self.input_size, 1, 1).permute(1, 0, 2), # torch.Size([1, 128, 128]) to torch.Size([128, 81, 128])
                            X.permute(0, 2, 1)), # torch.Size([128, 9, 81]) to torch.Size([128, 81, 9])
                            dim=2)
-            print(x.size()) # torch.Size([128, 81, 265])
+            # print(x.size()) # torch.Size([128, 81, 265])
 
             x = self.encoder_attn(
                 x.view(-1, self.encoder_num_hidden * 2 + self.T - 1))
