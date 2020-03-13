@@ -4,6 +4,34 @@ import tushare as ts
 import numpy as np
 import pandas as pd
 
+ohlcLst = ['open', 'high', 'low', 'close']
+ohlcVLst = ohlcLst+['volume']
+ohlcDVLst = ['date'] + ohlcLst + ['volume']
+
+def df_readcsv_start(filename, by, start_d):
+    df = pd.read_csv(filename, index_col = False, encoding = 'gbk')
+    if (len(df) > 0):
+        df = df.sort_values([by], ascending = True)
+        xc = df.index[-1]
+        _xt = df[by][xc]
+        s2 = str(_xt)
+        if s2 != 'nan':
+            start_d = s2.split(" ")[0]
+        #
+    return df, start_d
+
+def xappend(df, df0, by, num_round = 3):
+    if (len(df0) > 0):
+        df2 = df0.append(df)
+        df2 = df2.sort_values([by], ascending=True)
+        df2.drop_duplicates(subset = by, keep = 'last', inplace = True)
+        df = df2
+    #
+    df = df.sort_values([by], ascending = False)
+    df = np.round(df, num_round)
+    #
+    return df
+
 class databar():
     def __init__(self, code, start_d = '2001-01-01'):
         print("init databar ...")
@@ -14,12 +42,12 @@ class databar():
 
         self.cons = ts.get_apis()
 
-    def get_index(self): # 获取沪深300数据
-        df = ts.bar(self.index_code, conn = self.cons, asset = 'INDEX', start_date = self.start_d, end_date = self.end_d)
+    def get_index(self, code): # 获取指数数据
+        df = ts.bar(code, conn = self.cons, asset = 'INDEX', start_date = self.start_d, end_date = self.end_d)
 
-        df['index_ohlc_avg'] = df[['open', 'high', 'low', 'close']].mean(axis=1).round(2)
-        df = df.drop(['code', 'open', 'high', 'low', 'close', 'amount'], axis = 1)
-        df = df.rename(columns={'vol':'index_vol', 'p_change':'index_p_change'})
+        # df['ohlc_avg'] = df[['open', 'high', 'low', 'close']].mean(axis=1).round(2)
+        # df = df.drop(['code', 'open', 'high', 'low', 'close', 'amount'], axis = 1)
+        # df = df.rename(columns={'vol':'index_vol', 'p_change':'index_p_change'})
         # df['index_reserve'] = df['index_vol'].div(df['index_ohlc_avg'])
         #
         # print(df.head(10))
@@ -29,9 +57,9 @@ class databar():
         df = ts.bar(self.stock_code, conn = self.cons, start_date = self.start_d, end_date = self.end_d, ma=[5, 10, 20], factors=['vr', 'tor'])
 
         df['ohlc_avg'] = df[['open', 'high', 'low', 'close']].mean(axis=1).round(2)
-        df['y'] = df['close'].shift(+5)
-        
-        df = df.drop(['code', 'open', 'high', 'low', 'close', 'amount'], axis = 1)
+        df = df.drop(['code'], axis = 1)
+
+        # df = df.drop(['open', 'high', 'low', 'close', 'amount'], axis = 1)
 
         # print(df)
         # df['reserve'] = df['amount'].div(df['vol'])
@@ -42,7 +70,9 @@ class databar():
     def get(self):
         df_index = self.get_index()
         df_stock = self.get_stock()
-        df_stock = pd.merge(df_index, df_stock, left_index=True, right_index=True)
+        # df_stock = pd.merge(df_stock, df_index, left_index=True, right_index=True)
+        df_stock['y'] = df_stock['close'].shift(+5)
+
         df_stock = df_stock.dropna(axis=0, how='any', inplace=False)  # 删除为空的行
         print(df_stock.head(20))
         return df_stock
@@ -64,13 +94,68 @@ class download():
         if os.path.exists(path) == False:
             self.mkdir(path)
 
-    def download_by_code(self, code, start_d = '2001-01-01'):
+    def down_stk_inx(self, dir, code, start_d = '1994-01-01'):
+        ''' 下载大盘指数数据,简版股票数据，可下载到1994年股市开市起
+        【输入】
+            code:指数代码
+            dir,数据文件目录
+            start_d,数据起始时间
+        '''
+        df = []
+        df0 = []
+        filename = dir + code + '.csv'
+        if os.path.exists(filename):
+            df0, start_d = df_readcsv_start(filename, 'date', start_d)
+
+        try:
+            # df = ts.get_h_data(code, start = start_d, index = True, end = None, retry_count = 5, pause = 1) # Day9
+            df = ts.get_k_data(code, index = True, start = start_d, end = None)
+            df = df.drop(['code'], axis = 1)
+            if len(df) > 0:
+                if (len(df0) > 0):
+                    df = xappend(df, df0, 'date')
+
+                df = df.sort_values(['date'], ascending = False)
+                print(df.head(1))
+                print("download to file : ", filename)
+                df.to_csv(filename, index = False, encoding = 'gbk')
+        except IOError: 
+            pass #skip, error
+
+        return df    
+
+    def download_inx(self, file):
+        df = pd.read_csv(file, encoding = 'gbk')
+        n = len(df['code'])
+        for i in range(n):
+            dfi = df.iloc[i]
+            tim0 = dfi['tim0']
+            code = "%06d" %dfi['code']
+            print("\n", i + 1, "/", n, "code,", code, tim0)
+
+            self.down_stk_inx(self.down_dir, code, tim0)
+
+            #filename = self.down_dir + code + '.csv'
+
+            #databar_obj = databar(code)
+            #df_inx = databar_obj.get_index(code)
+            #df_inx.to_csv(filename, index = False, encoding = 'gbk')
+        return None
+
+    def download_stock(self, code, start_d = '2001-01-01'):
         filename = self.down_dir + code + '.csv'
 
-        databar_obj = databar(code)
+        databar_obj = databar(code, start_d)
         df = databar_obj.get()
         df.to_csv(filename, index = False, encoding = 'gbk')
-        return filename
+        return df
+
+    def download_industry_classified(self):
+        filename = self.down_dir + 'industry.csv'
+
+        df = ts.get_industry_classified()
+        df.to_csv(filename, index = False, encoding = 'gbk')
+        return df
 
     def read_by_file(self, filename, debug = True):
         df = pd.read_csv(filename, nrows = 500 if debug else None)
@@ -86,41 +171,6 @@ class download():
 
 ###############################################################
 
-ohlcLst = ['open', 'high', 'low', 'close']
-ohlcVLst = ohlcLst+['volume']
-ohlcDVLst = ['date'] + ohlcLst + ['volume']
-
-def df_xappend(df, df0, ksgn, num_round=3, vlst=ohlcDVLst):
-    if (len(df0) > 0):
-        df2 = df0.append(df)
-        df2 = df2.sort_values([ksgn], ascending=True)
-        df2.drop_duplicates(subset=ksgn, keep='last', inplace=True)
-        # xd2.index = pd.to_datetime(xd2.index); xd = xd2
-        df = df2
-    #
-    df = df.sort_values([ksgn], ascending=False)
-    df = np.round(df, num_round)
-    df2 = df[vlst]
-    #
-    return df2
-
-
-def df_rdcsv_tim0(fss, ksgn, tim0):
-    xd0 = pd.read_csv(fss, index_col=False, encoding='gbk')
-    # print('\nxd0\n', xd0.head())
-    if (len(xd0) > 0):
-        # xd0 = xd0.sort_index(ascending = False);
-        # xd0 = xd0.sort_values(['date'],ascending = False);
-        xd0 = xd0.sort_values([ksgn], ascending=True)
-        # print('\nxd0\n', xd0)
-        xc = xd0.index[-1]
-        _xt = xd0[ksgn][xc]  # xc = xd0.index[-1]
-        s2 = str(_xt)
-        # print('\nxc,', xc, _xt, 's2,', s2)
-        if s2 != 'nan':
-            tim0 = s2.split(" ")[0]
-    #
-    return xd0, tim0
 
 # 填充前一天和后一天的值
 def prepared_pre_next(df):

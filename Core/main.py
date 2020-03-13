@@ -8,12 +8,15 @@ sys.path.append("..")
 
 
 default_data_dir = "../data/"
-default_code = "300096"
+default_index_code = default_data_dir + "inx/inx_code.csv"
+default_code = '000300'
 
 def parse_args():
     """Parse arguments."""
     # Parameters settings
     parser = argparse.ArgumentParser(prog="python main.py", description="-- QAS 量化分析内核 --", epilog="---------------------")
+    
+    parser.add_argument('-i', '--init', action='store_true', default=False, help='初始化')
 
     parser.add_argument('-d', '--download', action='store_true', default=False, help='下载数据')
 
@@ -22,6 +25,8 @@ def parse_args():
     # Dataset setting
     parser.add_argument('--dir', type=str, default=default_data_dir, help='下载数据存放路径')
     parser.add_argument('--code', type=str, default=default_code, help='数据代码')
+
+    parser.add_argument('--inx_code', type=str, default=default_index_code, help='指数代码')
 
     parser.add_argument('--dataroot', type=str, default=default_data_dir + "default.csv", help='path to dataset')
     parser.add_argument('--batchsize', type=int, default=128, help='input batch size [128]')
@@ -47,9 +52,14 @@ def main():
     args = parse_args()
     print(args)
 
+    if args.init:
+        down_obj = download(args.dir + 'inx/')
+        # down_obj.download_industry_classified()
+        down_obj.download_inx(args.inx_code)
+
     if args.download:
         down_obj = download(args.dir)
-        down_obj.download_by_code(args.code)
+        down_obj.download_stock(args.code)
         # down_data(args.dir, args.code)
         # args.dataroot = default_data_dir + default_code + ".csv"
 
