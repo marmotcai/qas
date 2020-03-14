@@ -8,22 +8,11 @@ ohlcLst = ['open', 'high', 'low', 'close']
 ohlcVLst = ohlcLst+['volume']
 ohlcDVLst = ['date'] + ohlcLst + ['volume']
 
-def df_readcsv_start(filename, by, start_d):
-    df = pd.read_csv(filename, index_col = False, encoding = 'gbk')
-    if (len(df) > 0):
-        df = df.sort_values([by], ascending = True)
-        xc = df.index[-1]
-        _xt = df[by][xc]
-        s2 = str(_xt)
-        if s2 != 'nan':
-            start_d = s2.split(" ")[0]
-        #
-    return df, start_d
 
-def xappend(df, df0, by, num_round = 3):
+def dfappend(df, df0, by, num_round = 3):
     if (len(df0) > 0):
         df2 = df0.append(df)
-        df2 = df2.sort_values([by], ascending=True)
+        df2 = df2.sort_values([by], ascending = True)
         df2.drop_duplicates(subset = by, keep = 'last', inplace = True)
         df = df2
     #
@@ -33,14 +22,60 @@ def xappend(df, df0, by, num_round = 3):
     return df
 
 class databar():
-    def __init__(self, code, start_d = '2001-01-01'):
+    def __init__(self, dir, start_d = '2001-01-01'):
         print("init databar ...")
-        self.index_code = '000300'
-        self.stock_code = code
-        self.start_d = start_d
-        self.end_d = None
+        self.dir = dir
+        # self.index_code = '000300'
+        # self.stock_code = code
+        # self.start_d = start_d
+        # self.end_d = None
 
-        self.cons = ts.get_apis()
+        # self.cons = ts.get_apis()
+
+    def read_inx(self, filename): # 根据索引文件获取指数数据
+        ds = pd.DataFrame()
+        if not os.path.exists(filename):
+            print("inx file is not exists!")
+        else:
+            df = pd.read_csv(filename, encoding = 'gbk')
+            n = len(df['code'])
+            for i in range(n):
+                code = "%06d" %df.iloc[i]['code']
+
+                inx_file = self.dir + 'inx/' + code + ".csv"
+                print("\n read ", inx_file)
+
+                df_inx = pd.read_csv(inx_file, index_col = False, encoding = 'gbk')
+                print(df_inx.head(5))
+        return ds
+
+    def read_stk(self, filename): # 根据索引文件获取指数数据
+        ds = pd.DataFrame()
+        if not os.path.exists(filename):
+            print("inx file is not exists!")
+        else:
+            df = pd.read_csv(filename, encoding = 'gbk')
+            n = len(df['code'])
+            for i in range(n):
+                code = "%06d" %df.iloc[i]['code']
+
+                csvfile = self.dir + 'stk/' + code + ".csv"
+                print("\n read ", csvfile)
+
+                dfs = pd.read_csv(csvfile, index_col = False, encoding = 'gbk')
+                dfs.set_index('date')
+                dfs = dfs.drop(['open', 'high', 'low', 'volume'], axis = 1)
+                dfs = dfs.sort_values(['date'], ascending = False)
+                dfs = dfs.rename(columns={'close':code})
+
+                if ds.empty:
+                    ds = dfs
+                else:
+                    ds = pd.merge(ds, dfs, on='date', left_index=True, right_index=True)
+
+            # print(ds.head(5))
+            ds.to_csv(filename + '.tmp.csv', index = False, encoding = 'gbk')
+        return ds
 
     def get_index(self, code): # 获取指数数据
         df = ts.bar(code, conn = self.cons, asset = 'INDEX', start_date = self.start_d, end_date = self.end_d)
@@ -94,7 +129,19 @@ class download():
         if os.path.exists(path) == False:
             self.mkdir(path)
 
-    def down_stk_inx(self, dir, code, start_d = '1994-01-01'):
+    def readcsv_start(self, filename, by, start_d):
+        df = pd.read_csv(filename, index_col = False, encoding = 'gbk')
+        if (len(df) > 0):
+            df = df.sort_values([by], ascending = True)
+            xc = df.index[-1]
+            _xt = df[by][xc]
+            s2 = str(_xt)
+            if s2 != 'nan':
+                start_d = s2.split(" ")[0]
+            #
+        return df, start_d
+
+    def down_inx(self, dir, code, start_d = '1994-01-01'):
         ''' 下载大盘指数数据,简版股票数据，可下载到1994年股市开市起
         【输入】
             code:指数代码
@@ -105,15 +152,15 @@ class download():
         df0 = []
         filename = dir + code + '.csv'
         if os.path.exists(filename):
-            df0, start_d = df_readcsv_start(filename, 'date', start_d)
+            df0, start_d = self.readcsv_start(filename, 'date', start_d)
 
         try:
-            # df = ts.get_h_data(code, start = start_d, index = True, end = None, retry_count = 5, pause = 1) # Day9
             df = ts.get_k_data(code, index = True, start = start_d, end = None)
-            df = df.drop(['code'], axis = 1)
+
             if len(df) > 0:
+                df = df.drop(['code'], axis = 1)
                 if (len(df0) > 0):
-                    df = xappend(df, df0, 'date')
+                    df = dfappend(df, df0, 'date')
 
                 df = df.sort_values(['date'], ascending = False)
                 print(df.head(1))
@@ -122,7 +169,39 @@ class download():
         except IOError: 
             pass #skip, error
 
-        return df    
+        return df, filename
+
+    def down_stk(self, dir, code, type = 'D', start_d = '1994-01-01', end_d = None, fgInx = False):
+        ''' 中国A股数据下载子程序
+        【输入】
+            code:股票代码
+            dir,数据文件目录
+            type (str)：k线数据模式，默认为D，日线
+                D=日 W=周 M=月 ；5=5分钟 15=15分钟 ，30=30分钟 60=60分钟
+
+        '''
+        df = []
+        df0 = []
+        filename = dir + code + '.csv'
+        if os.path.exists(filename):
+            df0, start_d = self.readcsv_start(filename, 'date', start_d)
+
+        try:
+            df = ts.get_k_data(code, index = fgInx, start = start_d, end = end_d, ktype = type)
+                
+            if len(df) > 0:
+                df = df.drop(['code'], axis = 1)
+                if (len(df0) > 0):
+                    df = dfappend(df, df0, 'date')
+
+                df = df.sort_values(['date'], ascending = False)
+                print(df.head(1))
+                print("download to file : ", filename)
+                df.to_csv(filename, index = False, encoding = 'gbk')
+        except IOError: 
+            pass # skip,error
+                
+        return df, filename
 
     def download_inx(self, file):
         df = pd.read_csv(file, encoding = 'gbk')
@@ -133,13 +212,18 @@ class download():
             code = "%06d" %dfi['code']
             print("\n", i + 1, "/", n, "code,", code, tim0)
 
-            self.down_stk_inx(self.down_dir, code, tim0)
+            self.down_inx(self.down_dir + 'inx/', code, tim0)
+        return None
 
-            #filename = self.down_dir + code + '.csv'
+    def download_stk(self, file):
+        df = pd.read_csv(file, encoding = 'gbk')
+        n = len(df['code'])
+        for i in range(n):
+            dfi = df.iloc[i]
+            code = "%06d" %dfi['code']
+            print("\n", i + 1, "/", n, "code,", code)
 
-            #databar_obj = databar(code)
-            #df_inx = databar_obj.get_index(code)
-            #df_inx.to_csv(filename, index = False, encoding = 'gbk')
+            self.down_stk(self.down_dir + 'stk/', code)
         return None
 
     def download_stock(self, code, start_d = '2001-01-01'):
@@ -295,7 +379,7 @@ def down_stk(down_filepath, xcod, xtyp='D', tim0='1994-01-01', tim1=None, xinx=F
         if len(xdk) > 0:
             xd = xdk[ohlcDVLst + pre_next_col + avg_col + avgx_col + ma_col + amp_col]
             if (len(xd0) > 0):
-                xd = df_xappend(xd, xd0, 'date')
+                xd = dfappend(xd, xd0, 'date')
             #
             xd = xd.sort_values(['date'], ascending=False)
             xd.to_csv(down_filepath, index=False, encoding='gbk')
